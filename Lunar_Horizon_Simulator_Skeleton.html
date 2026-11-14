@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lunar Horizon Simulator — UI Skeleton</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Inter & JetBrains Mono fonts for astronomical telemetry -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        /* Technical blueprint grid background for placeholder canvas containers */
+        .blueprint-grid {
+            background-size: 32px 32px;
+            background-image: 
+                linear-gradient(to right, rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+        }
+
+        /* Hide tiny native browser spinners on numeric inputs */
+        input[type="number"].no-native-spin::-webkit-inner-spin-button,
+        input[type="number"].no-native-spin::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"].no-native-spin {
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+    <!-- =================================================================
+         1. TOP HEADER (Title + View / Window Switcher Tabs)
+    ================================================================== -->
+    <header class="h-16 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 lg:px-6 flex items-center justify-between sticky top-0 z-40">
+        <div class="flex items-center gap-3">
+            <!-- App Icon & Title -->
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-sm sm:text-base font-bold tracking-tight text-white leading-none">
+                        Lunar Horizon Simulator
+                    </h1>
+                    <span class="text-[11px] font-mono text-slate-400">Structural Skeleton v0.2</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation tabs between the 2 primary views -->
+        <nav class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800" aria-label="View selector">
+            <button id="tab-moon" type="button"
+                class="view-tab px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold bg-indigo-600 text-white shadow-sm transition-all flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-indigo-200"></span>
+                <span>Moon View</span>
+            </button>
+            <button id="tab-horizon" type="button"
+                class="view-tab px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-slate-200 transition-all flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-amber-400/70"></span>
+                <span class="hidden sm:inline">Horizon Profile (Earth & Sun)</span>
+                <span class="sm:hidden">Horizon</span>
+            </button>
+        </nav>
+    </header>
+
+    <!-- =================================================================
+         MAIN CONTAINER (Permanent Left Sidebar + Workspace Area)
+    ================================================================== -->
+    <div class="flex-1 flex flex-row overflow-x-auto">
+
+        <!-- =============================================================
+             2. LEFT SIDEBAR MENU (Always open and visible)
+        ============================================================== -->
+        <aside id="left-sidebar"
+            class="w-72 sm:w-80 shrink-0 bg-slate-900 border-r border-slate-800 flex flex-col justify-between">
+            
+            <div class="p-4 sm:p-5 space-y-6 overflow-y-auto">
+                <!-- Sidebar Header -->
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Observer Parameters</span>
+                    <span class="w-2 h-2 rounded-full bg-emerald-500" title="Panel active"></span>
+                </div>
+
+                <!-- BLOCK A: SELENOGRAPHIC / OBSERVER COORDINATES -->
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <label class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            Coordinates
+                        </label>
+                        <!-- Step precision selector -->
+                        <div class="flex items-center gap-1 bg-slate-950 p-0.5 rounded-md border border-slate-800" title="Arrow step increment">
+                            <button type="button" data-step="0.01" class="coord-step-btn px-1.5 py-0.5 text-[10px] font-mono rounded text-slate-400 hover:text-white transition-colors">0.01°</button>
+                            <button type="button" data-step="0.1" class="coord-step-btn px-1.5 py-0.5 text-[10px] font-mono rounded bg-indigo-600 text-white font-semibold transition-colors">0.1°</button>
+                            <button type="button" data-step="1" class="coord-step-btn px-1.5 py-0.5 text-[10px] font-mono rounded text-slate-400 hover:text-white transition-colors">1°</button>
+                        </div>
+                    </div>
+
+                    <!-- Lunar Landing Sites Dropdown Menu -->
+                    <div>
+                        <label for="select-landing-site" class="block text-[11px] text-slate-400 mb-1">Lunar Landing Site</label>
+                        <div class="relative">
+                            <select id="select-landing-site"
+                                class="w-full appearance-none pl-3 pr-9 py-2 rounded-xl bg-slate-950 border border-slate-700 hover:border-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/40 text-xs font-mono text-slate-200 focus:outline-none transition-all cursor-pointer">
+                                <option value="site_01" data-lat="0.0000" data-lon="0.0000" selected>SITE_PLACEHOLDER_01</option>
+                                <option value="site_02" data-lat="0.0000" data-lon="0.0000">SITE_PLACEHOLDER_02</option>
+                                <option value="site_03" data-lat="0.0000" data-lon="0.0000">SITE_PLACEHOLDER_03</option>
+                                <option value="site_04" data-lat="0.0000" data-lon="0.0000">SITE_PLACEHOLDER_04</option>
+                                <option value="custom">CUSTOM_COORDINATES</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <!-- Latitude Input with custom large step arrows -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="input-lat" class="text-[11px] text-slate-400">Latitude (°)</label>
+                                <span class="text-[10px] font-mono text-slate-500">±90°</span>
+                            </div>
+                            <div class="flex items-stretch rounded-xl bg-slate-950 border border-slate-700 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500/40 overflow-hidden transition-all">
+                                <input type="number" id="input-lat" step="0.0001" min="-90" max="90" value="0.0000" placeholder="LAT_PLACEHOLDER"
+                                    class="no-native-spin w-full min-w-0 pl-2.5 pr-1 py-2 bg-transparent text-sm font-mono text-white focus:outline-none">
+                                <div class="flex flex-col border-l border-slate-800 w-8 shrink-0 bg-slate-900/90">
+                                    <button type="button" data-target="input-lat" data-dir="1" aria-label="Increase latitude"
+                                        class="coord-arrow-btn flex-1 flex items-center justify-center text-slate-300 hover:text-white hover:bg-indigo-600 active:bg-indigo-500 transition-colors border-b border-slate-800/80 select-none">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"></path>
+                                        </svg>
+                                    </button>
+                                    <button type="button" data-target="input-lat" data-dir="-1" aria-label="Decrease latitude"
+                                        class="coord-arrow-btn flex-1 flex items-center justify-center text-slate-300 hover:text-white hover:bg-indigo-600 active:bg-indigo-500 transition-colors select-none">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Longitude Input with custom large step arrows -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="input-lon" class="text-[11px] text-slate-400">Longitude (°)</label>
+                                <span class="text-[10px] font-mono text-slate-500">±180°</span>
+                            </div>
+                            <div class="flex items-stretch rounded-xl bg-slate-950 border border-slate-700 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500/40 overflow-hidden transition-all">
+                                <input type="number" id="input-lon" step="0.0001" min="-180" max="180" value="0.0000" placeholder="LON_PLACEHOLDER"
+                                    class="no-native-spin w-full min-w-0 pl-2.5 pr-1 py-2 bg-transparent text-sm font-mono text-white focus:outline-none">
+                                <div class="flex flex-col border-l border-slate-800 w-8 shrink-0 bg-slate-900/90">
+                                    <button type="button" data-target="input-lon" data-dir="1" aria-label="Increase longitude"
+                                        class="coord-arrow-btn flex-1 flex items-center justify-center text-slate-300 hover:text-white hover:bg-indigo-600 active:bg-indigo-500 transition-colors border-b border-slate-800/80 select-none">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"></path>
+                                        </svg>
+                                    </button>
+                                    <button type="button" data-target="input-lon" data-dir="-1" aria-label="Decrease longitude"
+                                        class="coord-arrow-btn flex-1 flex items-center justify-center text-slate-300 hover:text-white hover:bg-indigo-600 active:bg-indigo-500 transition-colors select-none">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BLOCK B: OBSERVATION DATE & TIME -->
+                <div class="space-y-3 pt-2 border-t border-slate-800/80">
+                    <label class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        Observation Date & Time
+                    </label>
+
+                    <div>
+                        <label for="input-date" class="block text-[11px] text-slate-400 mb-1">Date</label>
+                        <input type="date" id="input-date"
+                            class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-sm font-mono text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label for="input-time" class="text-[11px] text-slate-400">Local Time</label>
+                            <button id="btn-now" type="button" class="text-[11px] font-semibold text-indigo-400 hover:text-indigo-300">
+                                Set Now
+                            </button>
+                        </div>
+                        <input type="time" id="input-time"
+                            class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-sm font-mono text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <!-- BLOCK C: UPDATE ACTION -->
+                <div class="pt-4 border-t border-slate-800">
+                    <button id="btn-update" type="button"
+                        class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        <span>Update Parameters</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Skeleton status note at bottom of sidebar -->
+            <div class="p-4 border-t border-slate-800 bg-slate-950/50">
+                <p class="text-[11px] text-slate-500 leading-relaxed">
+                    Wireframe Mode: astronomical ephemeris calculations will be wired in upcoming steps.
+                </p>
+            </div>
+        </aside>
+
+        <!-- =============================================================
+             3. MAIN WORKSPACE AREA (Contains the 2 switchable views)
+        ============================================================== -->
+        <main class="flex-1 min-w-[320px] flex flex-col bg-slate-950 overflow-y-auto">
+
+            <!-- Summary Telemetry Bar (Always visible at top) -->
+            <div class="bg-slate-900/50 border-b border-slate-800/80 px-4 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4 text-xs font-mono">
+                <div class="flex flex-wrap items-center gap-4 sm:gap-6">
+                    <div>
+                        <span class="text-slate-500">SITE:</span>
+                        <span id="display-site" class="text-emerald-300 font-semibold">SITE_PLACEHOLDER_01</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-500">LAT:</span>
+                        <span id="display-lat" class="text-slate-200 font-semibold">[LAT_PLACEHOLDER]</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-500">LON:</span>
+                        <span id="display-lon" class="text-slate-200 font-semibold">[LON_PLACEHOLDER]</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-500">DATE:</span>
+                        <span id="display-date" class="text-indigo-300 font-semibold">--/--/----</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-500">TIME:</span>
+                        <span id="display-time" class="text-indigo-300 font-semibold">--:--</span>
+                    </div>
+                </div>
+                <div id="status-toast" class="text-[11px] text-emerald-400 opacity-0 transition-opacity duration-300">
+                    ✓ Parameters updated
+                </div>
+            </div>
+
+            <!-- =========================================================
+                 VIEW 1: MOON REPRESENTATION (Primary)
+            ========================================================== -->
+            <section id="view-moon" class="flex-1 p-4 lg:p-8 flex flex-col gap-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                        <span class="text-xs font-mono uppercase tracking-wider text-indigo-400">Window 01 / 02</span>
+                        <h2 class="text-xl sm:text-2xl font-bold text-white">Moon Representation</h2>
+                    </div>
+                    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-slate-900 border border-slate-800 text-slate-300 self-start">
+                        <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                        Phase: Placeholder (Pending Calculation)
+                    </span>
+                </div>
+
+                <!-- Moon Placeholder Canvas Container -->
+                <div class="flex-1 min-h-[380px] rounded-2xl border-2 border-dashed border-slate-800 bg-slate-900/40 blueprint-grid flex flex-col items-center justify-center p-6 text-center relative">
+                    <span class="absolute top-3 left-3 text-[11px] font-mono text-slate-500 bg-slate-950/80 px-2.5 py-1 rounded-md border border-slate-800">
+                        CANVAS_MOON_VIEW
+                    </span>
+
+                    <!-- Wireframe Moon Disc Placeholder -->
+                    <div class="w-40 h-40 sm:w-48 sm:h-48 rounded-full border-2 border-indigo-500/40 bg-slate-900/90 shadow-inner flex flex-col items-center justify-center relative mb-4">
+                        <div class="w-32 h-32 sm:w-40 sm:h-40 rounded-full border border-dashed border-slate-700 flex items-center justify-center">
+                            <span class="text-xs font-mono text-slate-400">Lunar Disc</span>
+                        </div>
+                    </div>
+
+                    <h3 class="text-base font-semibold text-slate-200">Lunar Disc & Phase Render Area</h3>
+                    <p class="text-xs sm:text-sm text-slate-400 max-w-md mt-1">
+                        The Moon will be rendered here with illumination, libration, and orientation computed from the selected coordinates, date, and time.
+                    </p>
+                </div>
+
+                <!-- Placeholder Telemetry Data Cards -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+                        <p class="text-[11px] font-mono text-slate-500 uppercase">Illumination</p>
+                        <p class="text-lg font-mono font-semibold text-slate-200 mt-1">-- %</p>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+                        <p class="text-[11px] font-mono text-slate-500 uppercase">Moon Azimuth</p>
+                        <p class="text-lg font-mono font-semibold text-slate-200 mt-1">--.-°</p>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+                        <p class="text-[11px] font-mono text-slate-500 uppercase">Elevation</p>
+                        <p class="text-lg font-mono font-semibold text-slate-200 mt-1">--.-°</p>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+                        <p class="text-[11px] font-mono text-slate-500 uppercase">Earth Distance</p>
+                        <p class="text-lg font-mono font-semibold text-slate-200 mt-1">---,--- km</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- =========================================================
+                 VIEW 2: HORIZON PROFILE (EARTH & SUN) - Secondary
+            ========================================================== -->
+            <section id="view-horizon" class="hidden flex-1 p-4 lg:p-8 flex flex-col gap-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <span class="text-xs font-mono uppercase tracking-wider text-amber-400">Window 02 / 02</span>
+                        <h2 class="text-xl sm:text-2xl font-bold text-white">Horizon Profile — Earth & Sun Positions</h2>
+                    </div>
+                </div>
+
+                <!-- Horizon Diagram Placeholder Container -->
+                <div class="flex-1 min-h-[380px] rounded-2xl border-2 border-dashed border-slate-800 bg-slate-900/40 blueprint-grid flex flex-col justify-between p-6 relative overflow-hidden">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-mono text-slate-500 bg-slate-950/80 px-2.5 py-1 rounded-md border border-slate-800">
+                            CANVAS_HORIZON_PROFILE
+                        </span>
+                        <div class="flex items-center gap-4 text-xs font-mono">
+                            <span class="flex items-center gap-1.5 text-amber-400">
+                                <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span> Sun
+                            </span>
+                            <span class="flex items-center gap-1.5 text-sky-400">
+                                <span class="w-2.5 h-2.5 rounded-full bg-sky-400"></span> Earth / Horizon
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Visual Placeholder for Sun + Earth -->
+                    <div class="my-auto flex flex-col items-center text-center z-10 py-6">
+                        <div class="flex items-center gap-8 mb-6">
+                            <!-- Sun Placeholder -->
+                            <div class="w-16 h-16 rounded-full border-2 border-dashed border-amber-400/60 bg-amber-500/10 flex items-center justify-center">
+                                <span class="text-[11px] font-mono text-amber-300">SUN</span>
+                            </div>
+                            <!-- Earth Reference Placeholder -->
+                            <div class="w-20 h-20 rounded-full border-2 border-dashed border-sky-400/60 bg-sky-500/10 flex items-center justify-center">
+                                <span class="text-[11px] font-mono text-sky-300">EARTH</span>
+                            </div>
+                        </div>
+
+                        <h3 class="text-base font-semibold text-slate-200">Horizon Profile & Solar Geometry Diagram</h3>
+                        <p class="text-xs sm:text-sm text-slate-400 max-w-lg mt-1">
+                            The local horizon line, Sun elevation and azimuth, and relative Earth position will be plotted here.
+                        </p>
+                    </div>
+
+                    <!-- Wireframe Horizon Line at Bottom -->
+                    <div class="w-full pt-4 border-t-2 border-sky-500/40 flex justify-between text-[11px] font-mono text-slate-400">
+                        <span>NORTH (0°)</span>
+                        <span>EAST (90°)</span>
+                        <span>SOUTH (180°)</span>
+                        <span>WEST (270°)</span>
+                        <span>NORTH (360°)</span>
+                    </div>
+                </div>
+
+                <!-- Placeholder Sun & Horizon Data Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+                        <p class="text-[11px] font-mono text-slate-500 uppercase">Sun Position (Az / Alt)</p>
+                        <p class="text-base font-mono font-semibold text-amber-300 mt-1">--.-° / --.-°</p>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+                        <p class="text-[11px] font-mono text-slate-500 uppercase">Earth / Zenith Reference</p>
+                        <p class="text-base font-mono font-semibold text-sky-300 mt-1">Horizon 0.0°</p>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+                        <p class="text-[11px] font-mono text-slate-500 uppercase">Sun-Moon Phase Angle</p>
+                        <p class="text-base font-mono font-semibold text-slate-200 mt-1">--.-°</p>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- =================================================================
+         BASE JAVASCRIPT (UI State Management, View Navigation, Inputs)
+    ================================================================== -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // View & Tab references
+            const viewMoon = document.getElementById('view-moon');
+            const viewHorizon = document.getElementById('view-horizon');
+            const tabMoon = document.getElementById('tab-moon');
+            const tabHorizon = document.getElementById('tab-horizon');
+
+            // Input & Telemetry references
+            const selectLandingSite = document.getElementById('select-landing-site');
+            const inputLat = document.getElementById('input-lat');
+            const inputLon = document.getElementById('input-lon');
+            const inputDate = document.getElementById('input-date');
+            const inputTime = document.getElementById('input-time');
+            const displaySite = document.getElementById('display-site');
+            const displayLat = document.getElementById('display-lat');
+            const displayLon = document.getElementById('display-lon');
+            const displayDate = document.getElementById('display-date');
+            const displayTime = document.getElementById('display-time');
+            const statusToast = document.getElementById('status-toast');
+
+            // 1. Switch between Moon View and Horizon Profile View
+            function switchView(targetView) {
+                if (targetView === 'horizon') {
+                    viewMoon.classList.add('hidden');
+                    viewHorizon.classList.remove('hidden');
+
+                    tabHorizon.classList.add('bg-indigo-600', 'text-white', 'shadow-sm', 'font-semibold');
+                    tabHorizon.classList.remove('text-slate-400', 'font-medium');
+                    tabMoon.classList.remove('bg-indigo-600', 'text-white', 'shadow-sm', 'font-semibold');
+                    tabMoon.classList.add('text-slate-400', 'font-medium');
+                } else {
+                    viewHorizon.classList.add('hidden');
+                    viewMoon.classList.remove('hidden');
+
+                    tabMoon.classList.add('bg-indigo-600', 'text-white', 'shadow-sm', 'font-semibold');
+                    tabMoon.classList.remove('text-slate-400', 'font-medium');
+                    tabHorizon.classList.remove('bg-indigo-600', 'text-white', 'shadow-sm', 'font-semibold');
+                    tabHorizon.classList.add('text-slate-400', 'font-medium');
+                }
+            }
+
+            tabMoon.addEventListener('click', () => switchView('moon'));
+            tabHorizon.addEventListener('click', () => switchView('horizon'));
+
+            // 2. Set current Date and Time
+            function setNowDateTime() {
+                const now = new Date();
+                const yyyy = now.getFullYear();
+                const mm = String(now.getMonth() + 1).padStart(2, '0');
+                const dd = String(now.getDate()).padStart(2, '0');
+                const hh = String(now.getHours()).padStart(2, '0');
+                const min = String(now.getMinutes()).padStart(2, '0');
+
+                inputDate.value = `${yyyy}-${mm}-${dd}`;
+                inputTime.value = `${hh}:${min}`;
+            }
+
+            // 3. Synchronize sidebar parameters with the top telemetry bar
+            function syncTelemetry(showFeedback = false) {
+                const latVal = parseFloat(inputLat.value);
+                const lonVal = parseFloat(inputLon.value);
+                const selectedOption = selectLandingSite.options[selectLandingSite.selectedIndex];
+
+                const siteLabel = selectedOption
+                    ? selectedOption.textContent.trim()
+                    : 'CUSTOM_COORDINATES';
+
+                displaySite.textContent = siteLabel;
+                displayLat.textContent = !isNaN(latVal) ? `${latVal.toFixed(4)}°` : '[LAT_PLACEHOLDER]';
+                displayLon.textContent = !isNaN(lonVal) ? `${lonVal.toFixed(4)}°` : '[LON_PLACEHOLDER]';
+                displayDate.textContent = inputDate.value || '--/--/----';
+                displayTime.textContent = inputTime.value || '--:--';
+
+                if (showFeedback) {
+                    statusToast.classList.remove('opacity-0');
+                    setTimeout(() => {
+                        statusToast.classList.add('opacity-0');
+                    }, 2000);
+                }
+            }
+
+            // Handle Landing Site Dropdown selection
+            selectLandingSite.addEventListener('change', () => {
+                const selectedOption = selectLandingSite.options[selectLandingSite.selectedIndex];
+                if (selectedOption && selectedOption.value !== 'custom') {
+                    const lat = parseFloat(selectedOption.dataset.lat);
+                    const lon = parseFloat(selectedOption.dataset.lon);
+                    if (!isNaN(lat)) inputLat.value = lat.toFixed(4);
+                    if (!isNaN(lon)) inputLon.value = lon.toFixed(4);
+                }
+                syncTelemetry(true);
+            });
+
+            // Switch dropdown to "Custom Coordinates" when user edits coordinates manually
+            function markCustomCoordinates() {
+                if (selectLandingSite.value !== 'custom') {
+                    selectLandingSite.value = 'custom';
+                }
+            }
+
+            // Control button events
+            document.getElementById('btn-now').addEventListener('click', () => {
+                setNowDateTime();
+                syncTelemetry(true);
+            });
+
+            document.getElementById('btn-update').addEventListener('click', () => {
+                syncTelemetry(true);
+            });
+
+            // 4. Custom step arrows and step precision for Latitude and Longitude
+            let currentCoordStep = 0.1;
+            const stepButtons = document.querySelectorAll('.coord-step-btn');
+            const arrowButtons = document.querySelectorAll('.coord-arrow-btn');
+
+            // Change step precision (0.01°, 0.1°, 1°)
+            stepButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    currentCoordStep = parseFloat(btn.dataset.step);
+                    stepButtons.forEach(b => {
+                        b.classList.remove('bg-indigo-600', 'text-white', 'font-semibold');
+                        b.classList.add('text-slate-400');
+                    });
+                    btn.classList.add('bg-indigo-600', 'text-white', 'font-semibold');
+                    btn.classList.remove('text-slate-400');
+                });
+            });
+
+            // Increment/decrement coordinate while clamping to valid range
+            function adjustCoordinate(inputId, direction) {
+                const input = document.getElementById(inputId);
+                if (!input) return;
+
+                const min = parseFloat(input.min);
+                const max = parseFloat(input.max);
+                const current = parseFloat(input.value) || 0;
+                let next = current + (direction * currentCoordStep);
+
+                if (!isNaN(min) && next < min) next = min;
+                if (!isNaN(max) && next > max) next = max;
+
+                // Round to 4 decimals to prevent floating-point drift
+                input.value = (Math.round(next * 10000) / 10000).toFixed(4);
+                markCustomCoordinates();
+                syncTelemetry(false);
+            }
+
+            // Support single click and continuous press-and-hold
+            arrowButtons.forEach(btn => {
+                let holdTimeout = null;
+                let holdInterval = null;
+
+                const startAdjust = (e) => {
+                    e.preventDefault();
+                    const targetId = btn.dataset.target;
+                    const dir = parseInt(btn.dataset.dir, 10);
+
+                    adjustCoordinate(targetId, dir);
+
+                    holdTimeout = setTimeout(() => {
+                        holdInterval = setInterval(() => {
+                            adjustCoordinate(targetId, dir);
+                        }, 65);
+                    }, 320);
+                };
+
+                const stopAdjust = () => {
+                    clearTimeout(holdTimeout);
+                    clearInterval(holdInterval);
+                    holdTimeout = null;
+                    holdInterval = null;
+                };
+
+                btn.addEventListener('pointerdown', startAdjust);
+                btn.addEventListener('pointerup', stopAdjust);
+                btn.addEventListener('pointerleave', stopAdjust);
+                btn.addEventListener('pointercancel', stopAdjust);
+            });
+
+            // Immediate update when typing manually into coordinate inputs
+            [inputLat, inputLon].forEach(inp => {
+                inp.addEventListener('input', () => {
+                    markCustomCoordinates();
+                    syncTelemetry(false);
+                });
+            });
+
+            // Initialize on startup
+            setNowDateTime();
+            syncTelemetry(false);
+        });
+    </script>
+</body>
+</html>
