@@ -23,6 +23,15 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Three.js & OrbitControls Import Map -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
     <style>
         /* Technical blueprint grid background for placeholder canvas containers */
         .blueprint-grid {
@@ -41,6 +50,18 @@
         input[type="number"].no-native-spin {
             -moz-appearance: textfield;
             appearance: textfield;
+        }
+
+        /* Ensure Three.js WebGL canvas fills container cleanly */
+        #moon-canvas-container canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+            outline: none;
+            cursor: grab;
+        }
+        #moon-canvas-container canvas:active {
+            cursor: grabbing;
         }
     </style>
 </head>
@@ -92,7 +113,7 @@
              2. LEFT SIDEBAR MENU (Always open and visible)
         ============================================================== -->
         <aside id="left-sidebar"
-            class="w-72 sm:w-80 shrink-0 bg-slate-900 border-r border-slate-800 flex flex-col justify-between">
+            class="w-[280px] shrink-0 bg-slate-900 border-r border-slate-800 flex flex-col justify-between">
             
             <div class="p-4 sm:p-5 space-y-6 overflow-y-auto">
                 <!-- Sidebar Header -->
@@ -282,50 +303,62 @@
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
                         <span class="text-xs font-mono uppercase tracking-wider text-indigo-400">Window 01 / 02</span>
-                        <h2 class="text-xl sm:text-2xl font-bold text-white">Moon Representation</h2>
+                        <h2 class="text-xl sm:text-2xl font-bold text-white">Moon Surface & Coordinates</h2>
                     </div>
-                    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-slate-900 border border-slate-800 text-slate-300 self-start">
-                        <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
-                        Phase: Placeholder (Pending Calculation)
+                    <span class="text-xs font-mono text-slate-400 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg self-start">
+                        Interactive 3D Globe
                     </span>
                 </div>
 
-                <!-- Moon Placeholder Canvas Container -->
-                <div class="flex-1 min-h-[380px] rounded-2xl border-2 border-dashed border-slate-800 bg-slate-900/40 blueprint-grid flex flex-col items-center justify-center p-6 text-center relative">
-                    <span class="absolute top-3 left-3 text-[11px] font-mono text-slate-500 bg-slate-950/80 px-2.5 py-1 rounded-md border border-slate-800">
-                        CANVAS_MOON_VIEW
-                    </span>
-
-                    <!-- Wireframe Moon Disc Placeholder -->
-                    <div class="w-40 h-40 sm:w-48 sm:h-48 rounded-full border-2 border-indigo-500/40 bg-slate-900/90 shadow-inner flex flex-col items-center justify-center relative mb-4">
-                        <div class="w-32 h-32 sm:w-40 sm:h-40 rounded-full border border-dashed border-slate-700 flex items-center justify-center">
-                            <span class="text-xs font-mono text-slate-400">Lunar Disc</span>
-                        </div>
+                <!-- Moon Interactive 3D Viewport Container -->
+                <div id="moon-canvas-container" class="flex-1 min-h-[400px] rounded-2xl border border-slate-800 bg-slate-950 relative overflow-hidden shadow-2xl">
+                    <!-- Top-Left Viewport Label -->
+                    <div class="absolute top-3.5 left-3.5 z-10 flex items-center gap-2 pointer-events-none">
+                        <span class="text-[11px] font-mono text-slate-300 bg-slate-900/85 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-700/80 shadow">
+                            3D_LUNAR_GLOBE // WEBGL
+                        </span>
+                        <span id="hud-zoom-readout" class="text-[11px] font-mono text-indigo-300 bg-slate-900/85 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-700/80 shadow">
+                            DIST: 3.20 R☾
+                        </span>
                     </div>
 
-                    <h3 class="text-base font-semibold text-slate-200">Lunar Disc & Phase Render Area</h3>
-                    <p class="text-xs sm:text-sm text-slate-400 max-w-md mt-1">
-                        The Moon will be rendered here with illumination, libration, and orientation computed from the selected coordinates, date, and time.
-                    </p>
+                    <!-- Top-Right Interactive Camera Controls -->
+                    <div class="absolute top-3.5 right-3.5 z-10 flex items-center gap-2">
+                        <button id="btn-auto-rotate" type="button"
+                            class="px-2.5 py-1.5 rounded-lg text-xs font-mono bg-slate-900/85 hover:bg-slate-800 text-slate-300 border border-slate-700/80 backdrop-blur-md transition-all flex items-center gap-1.5 shadow">
+                            <span id="auto-rotate-dot" class="w-2 h-2 rounded-full bg-slate-500"></span>
+                            <span>Auto-Rotate</span>
+                        </button>
+                        <button id="btn-reset-camera" type="button"
+                            class="px-2.5 py-1.5 rounded-lg text-xs font-mono bg-indigo-600/90 hover:bg-indigo-500 text-white border border-indigo-400/40 backdrop-blur-md transition-all flex items-center gap-1.5 shadow">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            <span>Reset Camera</span>
+                        </button>
+                    </div>
+
+                    <!-- Bottom Floating Navigation Hints HUD -->
+                    <div class="absolute bottom-3.5 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
+                        <div class="px-3.5 py-1.5 rounded-full bg-slate-900/85 backdrop-blur-md border border-slate-700/80 text-[11px] font-mono text-slate-300 whitespace-nowrap shadow-lg">
+                            Drag to rotate • Scroll to zoom • Right-drag to pan
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Placeholder Telemetry Data Cards -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+                        <p class="text-[11px] font-mono text-slate-500 uppercase">Lunar Phase</p>
+                        <p class="text-base font-mono font-semibold text-indigo-300 mt-1">[PHASE_DATA]</p>
+                    </div>
                     <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
                         <p class="text-[11px] font-mono text-slate-500 uppercase">Illumination</p>
-                        <p class="text-lg font-mono font-semibold text-slate-200 mt-1">-- %</p>
+                        <p class="text-base font-mono font-semibold text-slate-200 mt-1">[ILLUMINATION_DATA]</p>
                     </div>
                     <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
-                        <p class="text-[11px] font-mono text-slate-500 uppercase">Moon Azimuth</p>
-                        <p class="text-lg font-mono font-semibold text-slate-200 mt-1">--.-°</p>
-                    </div>
-                    <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
-                        <p class="text-[11px] font-mono text-slate-500 uppercase">Elevation</p>
-                        <p class="text-lg font-mono font-semibold text-slate-200 mt-1">--.-°</p>
-                    </div>
-                    <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
-                        <p class="text-[11px] font-mono text-slate-500 uppercase">Earth Distance</p>
-                        <p class="text-lg font-mono font-semibold text-slate-200 mt-1">---,--- km</p>
+                        <p class="text-[11px] font-mono text-slate-500 uppercase">Earth-Moon Distance</p>
+                        <p class="text-base font-mono font-semibold text-slate-200 mt-1">[DISTANCE_DATA]</p>
                     </div>
                 </div>
             </section>
@@ -407,9 +440,12 @@
     </div>
 
     <!-- =================================================================
-         BASE JAVASCRIPT (UI State Management, View Navigation, Inputs)
+         BASE JAVASCRIPT & 3D THREE.JS MOON ENGINE
     ================================================================== -->
-    <script>
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
         document.addEventListener('DOMContentLoaded', () => {
             // View & Tab references
             const viewMoon = document.getElementById('view-moon');
@@ -430,7 +466,302 @@
             const displayTime = document.getElementById('display-time');
             const statusToast = document.getElementById('status-toast');
 
+            // -------------------------------------------------------------
+            // 3D MOON SCENE INITIALIZATION (Pre-made Texture, Flat Lit)
+            // -------------------------------------------------------------
+            const canvasContainer = document.getElementById('moon-canvas-container');
+            const hudZoomReadout = document.getElementById('hud-zoom-readout');
+            const btnAutoRotate = document.getElementById('btn-auto-rotate');
+            const autoRotateDot = document.getElementById('auto-rotate-dot');
+            const btnResetCamera = document.getElementById('btn-reset-camera');
+
+            const MOON_RADIUS = 1.0;
+            const DEFAULT_CAM_DIST = 3.2;
+
+            // Scene & Starfield Background
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x030712);
+
+            const camera = new THREE.PerspectiveCamera(42, 1, 0.05, 100);
+            camera.position.set(0, 0.35, DEFAULT_CAM_DIST);
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            canvasContainer.appendChild(renderer.domElement);
+
+            // OrbitControls: Left-drag orbit, scroll zoom, right-drag pan, touch gestures
+            const controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.06;
+            controls.rotateSpeed = 0.65;
+            controls.zoomSpeed = 0.85;
+            controls.panSpeed = 0.65;
+            controls.minDistance = 1.35;
+            controls.maxDistance = 8.5;
+            controls.autoRotate = false;
+            controls.autoRotateSpeed = 0.6;
+
+            // Procedural Starfield
+            function createStarfield() {
+                const starCount = 1800;
+                const positions = new Float32Array(starCount * 3);
+                const colors = new Float32Array(starCount * 3);
+                let seed = 4219;
+                const rand = () => {
+                    seed = (seed * 16807) % 2147483647;
+                    return (seed - 1) / 2147483646;
+                };
+
+                for (let i = 0; i < starCount; i++) {
+                    const r = 28 + rand() * 35;
+                    const theta = rand() * Math.PI * 2;
+                    const phi = Math.acos(2 * rand() - 1);
+                    positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+                    positions[i * 3 + 1] = r * Math.cos(phi);
+                    positions[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+
+                    const tint = 0.72 + rand() * 0.28;
+                    colors[i * 3] = tint * (0.92 + rand() * 0.08);
+                    colors[i * 3 + 1] = tint * (0.94 + rand() * 0.06);
+                    colors[i * 3 + 2] = tint;
+                }
+
+                const geom = new THREE.BufferGeometry();
+                geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+                const mat = new THREE.PointsMaterial({
+                    size: 0.14,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.85
+                });
+                return new THREE.Points(geom, mat);
+            }
+            scene.add(createStarfield());
+
+            // Lightweight offline fallback texture if external CDN texture fails
+            function createFallbackLunarTexture() {
+                const canvas = document.createElement('canvas');
+                canvas.width = 512;
+                canvas.height = 256;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#a8a6a1';
+                ctx.fillRect(0, 0, 512, 256);
+                let seed = 1969;
+                const rand = () => {
+                    seed = (seed * 16807) % 2147483647;
+                    return (seed - 1) / 2147483646;
+                };
+                for (let i = 0; i < 240; i++) {
+                    const x = rand() * 512;
+                    const y = rand() * 256;
+                    const r = 2 + Math.pow(rand(), 2.5) * 18;
+                    ctx.fillStyle = rand() > 0.45 ? 'rgba(82, 82, 85, 0.35)' : 'rgba(215, 213, 208, 0.25)';
+                    ctx.beginPath();
+                    ctx.arc(x, y, r, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                const tex = new THREE.CanvasTexture(canvas);
+                tex.colorSpace = THREE.SRGBColorSpace;
+                return tex;
+            }
+
+            // Moon Sphere Mesh with MeshBasicMaterial (100% uniform illumination, zero shadows)
+            const moonGroup = new THREE.Group();
+            scene.add(moonGroup);
+
+            const moonGeometry = new THREE.SphereGeometry(MOON_RADIUS, 96, 96);
+            const moonMaterial = new THREE.MeshBasicMaterial({
+                color: 0xffffff
+            });
+
+            const textureLoader = new THREE.TextureLoader();
+            textureLoader.setCrossOrigin('anonymous');
+            const MOON_TEXTURE_URL = 'https://raw.githubusercontent.com/mrdoob/three.js/r160/examples/textures/planets/moon_1024.jpg';
+
+            textureLoader.load(
+                MOON_TEXTURE_URL,
+                (loadedTexture) => {
+                    loadedTexture.colorSpace = THREE.SRGBColorSpace;
+                    moonMaterial.map = loadedTexture;
+                    moonMaterial.needsUpdate = true;
+                },
+                undefined,
+                () => {
+                    moonMaterial.map = createFallbackLunarTexture();
+                    moonMaterial.needsUpdate = true;
+                }
+            );
+
+            const moonMesh = new THREE.Mesh(moonGeometry, moonMaterial);
+            // Align prime meridian (0° longitude) of standard equirectangular Moon map with +Z axis
+            moonMesh.rotation.y = -Math.PI / 2;
+            moonGroup.add(moonMesh);
+
+            // Subtle Prime Meridian & Equator Reference Grid (faint technical overlay)
+            const gridSphereGeo = new THREE.SphereGeometry(MOON_RADIUS * 1.002, 36, 18);
+            const gridWireframe = new THREE.WireframeGeometry(gridSphereGeo);
+            const gridMat = new THREE.LineBasicMaterial({
+                color: 0x6366f1,
+                transparent: true,
+                opacity: 0.08
+            });
+            const lunarGridLines = new THREE.LineSegments(gridWireframe, gridMat);
+            moonGroup.add(lunarGridLines);
+
+            // 3D Surface Coordinate Marker Pin & Pulse Ring
+            const markerGroup = new THREE.Group();
+            moonGroup.add(markerGroup);
+
+            const ringGeo = new THREE.RingGeometry(0.026, 0.038, 32);
+            const ringMat = new THREE.MeshBasicMaterial({
+                color: 0x34d399,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.95
+            });
+            const markerRing = new THREE.Mesh(ringGeo, ringMat);
+            markerGroup.add(markerRing);
+
+            const pulseRingGeo = new THREE.RingGeometry(0.042, 0.052, 32);
+            const pulseRingMat = new THREE.MeshBasicMaterial({
+                color: 0x6366f1,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.65
+            });
+            const markerPulseRing = new THREE.Mesh(pulseRingGeo, pulseRingMat);
+            markerGroup.add(markerPulseRing);
+
+            const pinStemGeo = new THREE.CylinderGeometry(0.004, 0.004, 0.08, 12);
+            pinStemGeo.rotateX(Math.PI / 2);
+            pinStemGeo.translate(0, 0, 0.04);
+            const pinStemMat = new THREE.MeshBasicMaterial({ color: 0x34d399 });
+            const pinStem = new THREE.Mesh(pinStemGeo, pinStemMat);
+            markerGroup.add(pinStem);
+
+            const pinHeadGeo = new THREE.SphereGeometry(0.013, 16, 16);
+            pinHeadGeo.translate(0, 0, 0.085);
+            const pinHeadMat = new THREE.MeshBasicMaterial({ color: 0x6ee7b7 });
+            const pinHead = new THREE.Mesh(pinHeadGeo, pinHeadMat);
+            markerGroup.add(pinHead);
+
+            // Convert Selenographic Latitude & Longitude (degrees) to 3D Cartesian vector
+            // Aligned so Lat=0°, Lon=0° faces +Z (front center of the Moon's nearside)
+            function latLonToVector3(latDeg, lonDeg, radius = MOON_RADIUS) {
+                const lat = THREE.MathUtils.degToRad(latDeg);
+                const lon = THREE.MathUtils.degToRad(lonDeg);
+                const x = radius * Math.cos(lat) * Math.sin(lon);
+                const y = radius * Math.sin(lat);
+                const z = radius * Math.cos(lat) * Math.cos(lon);
+                return new THREE.Vector3(x, y, z);
+            }
+
+            // Update 3D Marker Position on the Moon surface
+            function updateSurfaceMarker(latDeg, lonDeg) {
+                const surfacePos = latLonToVector3(latDeg, lonDeg, MOON_RADIUS * 1.004);
+                markerGroup.position.copy(surfacePos);
+                markerGroup.lookAt(surfacePos.clone().multiplyScalar(2));
+            }
+
+            // Smooth Camera Transition State toward selected coordinate
+            let cameraTransition = null;
+
+            function focusCameraOnCoordinates(latDeg, lonDeg) {
+                const targetDir = latLonToVector3(latDeg, lonDeg, 1).normalize();
+                const currentDist = THREE.MathUtils.clamp(camera.position.distanceTo(controls.target), 1.8, 4.2);
+                const endCamPos = targetDir.clone().multiplyScalar(currentDist);
+
+                cameraTransition = {
+                    startPos: camera.position.clone(),
+                    endPos: endCamPos,
+                    startTarget: controls.target.clone(),
+                    endTarget: new THREE.Vector3(0, 0, 0),
+                    progress: 0
+                };
+            }
+
+            // Responsive Resize Handling via ResizeObserver
+            function resizeMoonRenderer() {
+                const rect = canvasContainer.getBoundingClientRect();
+                if (rect.width > 0 && rect.height > 0) {
+                    camera.aspect = rect.width / rect.height;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(rect.width, rect.height, false);
+                }
+            }
+
+            const resizeObserver = new ResizeObserver(() => {
+                resizeMoonRenderer();
+            });
+            resizeObserver.observe(canvasContainer);
+            resizeMoonRenderer();
+
+            // HUD Controls: Auto-Rotate & Reset Camera
+            btnAutoRotate.addEventListener('click', () => {
+                controls.autoRotate = !controls.autoRotate;
+                if (controls.autoRotate) {
+                    btnAutoRotate.classList.add('border-indigo-500/70', 'text-indigo-200', 'bg-indigo-950/80');
+                    autoRotateDot.classList.remove('bg-slate-500');
+                    autoRotateDot.classList.add('bg-emerald-400');
+                } else {
+                    btnAutoRotate.classList.remove('border-indigo-500/70', 'text-indigo-200', 'bg-indigo-950/80');
+                    autoRotateDot.classList.add('bg-slate-500');
+                    autoRotateDot.classList.remove('bg-emerald-400');
+                }
+            });
+
+            btnResetCamera.addEventListener('click', () => {
+                cameraTransition = {
+                    startPos: camera.position.clone(),
+                    endPos: new THREE.Vector3(0, 0.35, DEFAULT_CAM_DIST),
+                    startTarget: controls.target.clone(),
+                    endTarget: new THREE.Vector3(0, 0, 0),
+                    progress: 0
+                };
+            });
+
+            // Cancel smooth transition if user grabs the globe manually
+            controls.addEventListener('start', () => {
+                cameraTransition = null;
+            });
+
+            // Animation Loop
+            const clock = new THREE.Clock();
+            function animate() {
+                requestAnimationFrame(animate);
+                const elapsed = clock.getElapsedTime();
+
+                // Animate marker pulse ring
+                const pulseScale = 1 + 0.25 * Math.sin(elapsed * 3.2);
+                markerPulseRing.scale.set(pulseScale, pulseScale, 1);
+                pulseRingMat.opacity = 0.45 + 0.3 * Math.cos(elapsed * 3.2);
+
+                // Smooth camera focus interpolation
+                if (cameraTransition) {
+                    cameraTransition.progress = Math.min(1, cameraTransition.progress + 0.035);
+                    const ease = 1 - Math.pow(1 - cameraTransition.progress, 3);
+                    camera.position.lerpVectors(cameraTransition.startPos, cameraTransition.endPos, ease);
+                    controls.target.lerpVectors(cameraTransition.startTarget, cameraTransition.endTarget, ease);
+                    if (cameraTransition.progress >= 1) {
+                        cameraTransition = null;
+                    }
+                }
+
+                controls.update();
+
+                // Update live zoom/distance readout in HUD
+                const camDist = camera.position.distanceTo(controls.target);
+                hudZoomReadout.textContent = `DIST: ${camDist.toFixed(2)} R☾`;
+
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            // -------------------------------------------------------------
             // 1. Switch between Moon View and Horizon Profile View
+            // -------------------------------------------------------------
             function switchView(targetView) {
                 if (targetView === 'horizon') {
                     viewMoon.classList.add('hidden');
@@ -448,6 +779,7 @@
                     tabMoon.classList.remove('text-slate-400', 'font-medium');
                     tabHorizon.classList.remove('bg-indigo-600', 'text-white', 'shadow-sm', 'font-semibold');
                     tabHorizon.classList.add('text-slate-400', 'font-medium');
+                    resizeMoonRenderer();
                 }
             }
 
@@ -467,8 +799,8 @@
                 inputTime.value = `${hh}:${min}`;
             }
 
-            // 3. Synchronize sidebar parameters with the top telemetry bar
-            function syncTelemetry(showFeedback = false) {
+            // 3. Synchronize sidebar parameters with top telemetry bar & 3D marker
+            function syncTelemetry(showFeedback = false, focus3D = false) {
                 const latVal = parseFloat(inputLat.value);
                 const lonVal = parseFloat(inputLon.value);
                 const selectedOption = selectLandingSite.options[selectLandingSite.selectedIndex];
@@ -482,6 +814,14 @@
                 displayLon.textContent = !isNaN(lonVal) ? `${lonVal.toFixed(4)}°` : '[LON_PLACEHOLDER]';
                 displayDate.textContent = inputDate.value || '--/--/----';
                 displayTime.textContent = inputTime.value || '--:--';
+
+                const validLat = !isNaN(latVal) ? THREE.MathUtils.clamp(latVal, -90, 90) : 0;
+                const validLon = !isNaN(lonVal) ? THREE.MathUtils.clamp(lonVal, -180, 180) : 0;
+                updateSurfaceMarker(validLat, validLon);
+
+                if (focus3D) {
+                    focusCameraOnCoordinates(validLat, validLon);
+                }
 
                 if (showFeedback) {
                     statusToast.classList.remove('opacity-0');
@@ -500,7 +840,7 @@
                     if (!isNaN(lat)) inputLat.value = lat.toFixed(4);
                     if (!isNaN(lon)) inputLon.value = lon.toFixed(4);
                 }
-                syncTelemetry(true);
+                syncTelemetry(true, true);
             });
 
             // Switch dropdown to "Custom Coordinates" when user edits coordinates manually
@@ -513,11 +853,11 @@
             // Control button events
             document.getElementById('btn-now').addEventListener('click', () => {
                 setNowDateTime();
-                syncTelemetry(true);
+                syncTelemetry(true, false);
             });
 
             document.getElementById('btn-update').addEventListener('click', () => {
-                syncTelemetry(true);
+                syncTelemetry(true, true);
             });
 
             // 4. Custom step arrows and step precision for Latitude and Longitude
@@ -554,7 +894,7 @@
                 // Round to 4 decimals to prevent floating-point drift
                 input.value = (Math.round(next * 10000) / 10000).toFixed(4);
                 markCustomCoordinates();
-                syncTelemetry(false);
+                syncTelemetry(false, false);
             }
 
             // Support single click and continuous press-and-hold
@@ -593,13 +933,13 @@
             [inputLat, inputLon].forEach(inp => {
                 inp.addEventListener('input', () => {
                     markCustomCoordinates();
-                    syncTelemetry(false);
+                    syncTelemetry(false, false);
                 });
             });
 
             // Initialize on startup
             setNowDateTime();
-            syncTelemetry(false);
+            syncTelemetry(false, false);
         });
     </script>
 </body>
