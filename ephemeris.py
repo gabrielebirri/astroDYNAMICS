@@ -58,31 +58,41 @@ def get_lunar_ephemeris(target_id: str, lat: float, lon: float, alt: float,
     
     return df
 
+
+
+import numpy as np
+
+def add_cartesian_vectors(df, prefix):
+    """
+    Converts Azimuth and Elevation (in degrees) to ENU Cartesian unit vectors.
+    prefix: '_Sun' or '_Earth' based on the column names in the merged dataframe.
+    """
+    # Convert degrees to radians for numpy trigonometric functions
+    az_rad = np.radians(df[f"Azimuth{prefix}"])
+    el_rad = np.radians(df[f"Elevation{prefix}"])
+    
+    # Calculate ENU components
+    df[f"X_East{prefix}"] = np.sin(az_rad) * np.cos(el_rad)
+    df[f"Y_North{prefix}"] = np.cos(az_rad) * np.cos(el_rad)
+    df[f"Z_Up{prefix}"] = np.sin(el_rad)
+    
+    return df
+
+def generate_mission_timeline(lat: float, lon: float, alt: float, start_time: str, stop_time: str):
+    """Fetches data, calculates vectors, and returns a JSON string for the frontend."""
+    earth_data = get_lunar_ephemeris("399", lat, lon, alt, start_time, stop_time)
+    sun_data = get_lunar_ephemeris("10", lat, lon, alt, start_time, stop_time)
+    
+    mission_timeline = pd.merge(sun_data, earth_data, on="Date_Time", suffixes=('_Sun', '_Earth'))
+    mission_timeline = add_cartesian_vectors(mission_timeline, "_Sun")
+    mission_timeline = add_cartesian_vectors(mission_timeline, "_Earth")
+    
+    # Return as a JSON string directly to the caller (no file saving)
+    return mission_timeline.to_json(orient="records", date_format="iso")
+
 # --- Usage Example: Simulating a South Pole Mission ---
 if __name__ == "__main__":
-    # Target: Shackleton Crater Rim (approximate South Pole coordinates)
-    target_lat = -89.9
-    target_lon = 0.0
-    target_alt = 0.0
+    # Test the unified function
+    json_payload = generate_mission_timeline(-89.9, 0.0, 0.0, "2027-01-01", "2027-01-15")
+    print(json_payload[:500]) # Print just the first 500 characters to verify
     
-    sim_start = "2027-01-01"
-    sim_end = "2027-01-15" # Simulating a 14-day lunar surface window
-    resolution = "1 h"
-    
-    print("Fetching Earth vectors...")
-    earth_data = get_lunar_ephemeris("399", target_lat, target_lon, target_alt, sim_start, sim_end, resolution)
-    
-    print("Fetching Sun vectors...")
-    sun_data = get_lunar_ephemeris("10", target_lat, target_lon, target_alt, sim_start, sim_end, resolution)
-    
-    # Merge datasets on the Date_Time column for a unified timeline
-    mission_timeline = pd.merge(
-        sun_data, 
-        earth_data, 
-        on="Date_Time", 
-        suffixes=('_Sun', '_Earth')
-    )
-    
-    # Convert to JSON for injection into a frontend framework
-    json_output = mission_timeline.to_json(orient="records", date_format="iso")
-    print(mission_timeline.head())
