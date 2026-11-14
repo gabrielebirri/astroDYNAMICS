@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lunar Horizon Simulator — UI Skeleton</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Inter & JetBrains Mono fonts for astronomical telemetry -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Plotly.js for Horizon Profile & 3D DEM Terrain -->
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+    <!-- Three.js & OrbitControls Import Map -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+    <style>
+        /* Technical blueprint grid background for placeholder canvas containers */
+        .blueprint-grid {
+            background-size: 32px 32px;
+            background-image: 
+                linear-gradient(to right, rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+        }
+
+        /* Hide tiny native browser spinners on numeric inputs */
+        input[type="number"].no-native-spin::-webkit-inner-spin-button,
+        input[type="number"].no-native-spin::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"].no-native-spin {
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+
+        /* Ensure Three.js WebGL canvas fills container cleanly */
+        #moon-canvas-container canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+            outline: none;
+            cursor: grab;
+        }
+        #moon-canvas-container canvas:active {
+            cursor: grabbing;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+    <!-- =================================================================
+         1. TOP HEADER (Title + View / Window Switcher Tabs)
+    ================================================================== -->
+    <header class="h-16 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 lg:px-6 flex items-center justify-between sticky top-0 z-40">
+        <div class="flex items-center gap-3">
+            <!-- App Icon & Title -->
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-sm sm:text-base font-bold tracking-tight text-white leading-none">
+                        Lunar Horizon Simulator
+                    </h1>
+                    <span class="text-[11px] font-mono text-slate-400">Structural Skeleton v0.2</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation tabs between the 3 views -->
+        <nav class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800" aria-label="View selector">
+            <button id="tab-moon" type="button"
+                class="view-tab px-3 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold bg-indigo-600 text-white shadow-sm transition-all flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-indigo-200"></span>
+                <span>1. Moon View</span>
+            </button>
+            <button id="tab-dem" type="button"
+                class="view-tab px-3 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-slate-200 transition-all flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-400/70"></span>
+                <span>2. 3D Terrain (lunar.py)</span>
+            </button>
+            <button id="tab-horizon" type="button"
+                class="view-tab px-3 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-slate-200 transition-all flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-amber-400/70"></span>
+                <span>3. First-Person Surface</span>
+            </button>
+        </nav>
+    </header>
+
+    <!-- =================================================================
+         MAIN CONTAINER (Permanent Left Sidebar + Workspace Area)
+    ================================================================== -->
+    <div class="flex-1 flex flex-row overflow-x-auto">
+
+        <!-- =============================================================
+             2. LEFT SIDEBAR MENU (Always open and visible)
+        ============================================================== -->
+        <aside id="left-sidebar"
+            class="w-[280px] shrink-0 bg-slate-900 border-r border-slate-800 flex flex-col justify-between">
+            
+            <div class="p-4 sm:p-5 space-y-6 overflow-y-auto">
+                <!-- Sidebar Header -->
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Observer Parameters</span>
+                    <span class="w-2 h-2 rounded-full bg-emerald-500" title="Panel active"></span>
+                </div>
+
+                <!-- BLOCK A: SELENOGRAPHIC / OBSERVER COORDINATES -->
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <label class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            Coordinates
+                        </label>
+                        <!-- Step precision selector -->
+                        <div class="flex items-center gap-1 bg-slate-950 p-0.5 rounded-md border border-slate-800" title="Arrow step increment">
+                            <button type="button" data-step="0.01" class="coord-step-btn px-1.5 py-0.5 text-[10px] font-mono rounded text-slate-400 hover:text-white transition-colors">0.01°</button>
+                            <button type="button" data-step="0.1" class="coord-step-btn px-1.5 py-0.5 text-[10px] font-mono rounded bg-indigo-600 text-white font-semibold transition-colors">0.1°</button>
+                            <button type="button" data-step="1" class="coord-step-btn px-1.5 py-0.5 text-[10px] font-mono rounded text-slate-400 hover:text-white transition-colors">1°</button>
+                        </div>
+                    </div>
+
+                    <!-- Lunar Landing Sites Dropdown Menu -->
+                    <div>
+                        <label for="select-landing-site" class="block text-[11px] text-slate-400 mb-1">Lunar Landing Site</label>
+                        <div class="relative">
+                            <select id="select-landing-site"
+                                class="w-full appearance-none pl-3 pr-9 py-2 rounded-xl bg-slate-950 border border-slate-700 hover:border-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/40 text-xs font-mono text-slate-200 focus:outline-none transition-all cursor-pointer">
+                                <option value="1" data-lat="-43.3100" data-lon="-11.3600" selected>Tycho Crater (-43.31°, -11.36°)</option>
+                                <option value="2" data-lat="9.6200" data-lon="-20.0800">Copernicus Crater (9.62°, -20.08°)</option>
+                                <option value="3" data-lat="24.5000" data-lon="-49.0000">Aristarchus & Vallis Schroteri (24.50°, -49.00°)</option>
+                                <option value="4" data-lat="49.2000" data-lon="3.2000">Vallis Alpes (49.20°, 3.20°)</option>
+                                <option value="5" data-lat="26.1300" data-lon="3.6300">Apollo 15 - Mons Hadley (26.13°, 3.63°)</option>
+                                <option value="6" data-lat="20.1900" data-lon="30.7700">Apollo 17 - Taurus-Littrow (20.19°, 30.77°)</option>
+                                <option value="7" data-lat="51.6000" data-lon="-9.3000">Plato Crater (51.60°, -9.30°)</option>
+                                <option value="8" data-lat="19.5000" data-lon="-1.5000">Montes Apenninus (19.50°, -1.50°)</option>
+                                <option value="9" data-lat="-21.8000" data-lon="-7.8000">Rupes Recta (-21.80°, -7.80°)</option>
+                                <option value="10" data-lat="-20.4000" data-lon="129.1000">Tsiolkovskiy Crater (-20.40°, 129.1000°)</option>
+                                <option value="11" data-lat="-89.4500" data-lon="-137.3100">Polo sud - Cresta di Shackleton (-89.45°, -137.31°)</option>
+                                <option value="12" data-lat="-85.9900" data-lon="-2.9300">Polo sud - Massiccio Malapert (-85.99°, -2.93°)</option>
+                                <option value="custom">Custom Coordinates</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <!-- Latitude Input with custom large step arrows -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="input-lat" class="text-[11px] text-slate-400">Latitude (°)</label>
+                                <span class="text-[10px] font-mono text-slate-500">±90°</span>
+                            </div>
+                            <div class="flex items-stretch rounded-xl bg-slate-950 border border-slate-700 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500/40 overflow-hidden transition-all">
+                                <input type="number" id="input-lat" step="0.0001" min="-90" max="90" value="-43.3100" placeholder="LAT_PLACEHOLDER"
+                                    class="no-native-spin w-full min-w-0 pl-2.5 pr-1 py-2 bg-transparent text-sm font-mono text-white focus:outline-none">
+                                <div class="flex flex-col border-l border-slate-800 w-8 shrink-0 bg-slate-900/90">
+                                    <button type="button" data-target="input-lat" data-dir="1" aria-label="Increase latitude"
+                                        class="coord-arrow-btn flex-1 flex items-center justify-center text-slate-300 hover:text-white hover:bg-indigo-600 active:bg-indigo-500 transition-colors border-b border-slate-800/80 select-none">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"></path>
+                                        </svg>
+                                    </button>
+                                    <button type="button" data-target="input-lat" data-dir="-1" aria-label="Decrease latitude"
+                                        class="coord-arrow-btn flex-1 flex items-center justify-center text-slate-300 hover:text-white hover:bg-indigo-600 active:bg-indigo-500 transition-colors select-none">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Longitude Input with custom large step arrows -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="input-lon" class="text-[11px] text-slate-400">Longitude (°)</label>
+                                <span class="text-[10px] font-mono text-slate-500">±180°</span>
+                            </div>
+                            <div class="flex items-stretch rounded-xl bg-slate-950 border border-slate-700 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500/40 overflow-hidden transition-all">
+                                <input type="number" id="input-lon" step="0.0001" min="-180" max="180" value="-11.3600" placeholder="LON_PLACEHOLDER"
+                                    class="no-native-spin w-full min-w-0 pl-2.5 pr-1 py-2 bg-transparent text-sm font-mono text-white focus:outline-none">
+                                <div class="flex flex-col border-l border-slate-800 w-8 shrink-0 bg-slate-900/90">
+                                    <button type="button" data-target="input-lon" data-dir="1" aria-label="Increase longitude"
+                                        class="coord-arrow-btn flex-1 flex items-center justify-center text-slate-300 hover:text-white hover:bg-indigo-600 active:bg-indigo-500 transition-colors border-b border-slate-800/80 select-none">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"></path>
+                                        </svg>
+                                    </button>
+                                    <button type="button" data-target="input-lon" data-dir="-1" aria-label="Decrease longitude"
+                                        class="coord-arrow-btn flex-1 flex items-center justify-center text-slate-300 hover:text-white hover:bg-indigo-600 active:bg-indigo-500 transition-colors select-none">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BLOCK B: OBSERVATION DATE & TIME -->
+                <div class="space-y-3 pt-2 border-t border-slate-800/80">
+                    <label class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        Observation Date & Time
+                    </label>
+
+                    <div>
+                        <label for="input-date" class="block text-[11px] text-slate-400 mb-1">Date</label>
+                        <input type="date" id="input-date"
+                            class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-sm font-mono text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label for="input-time" class="text-[11px] text-slate-400">Local Time</label>
+                            <button id="btn-now" type="button" class="text-[11px] font-semibold text-indigo-400 hover:text-indigo-300">
+                                Set Now
+                            </button>
+                        </div>
+                        <input type="time" id="input-time"
+                            class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-sm font-mono text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <!-- BLOCK C: UPDATE ACTION & COMPARE TOGGLE -->
+                <div class="pt-4 border-t border-slate-800 space-y-2.5">
+                    <button id="btn-update" type="button"
+                        class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        <span>Visit Site</span>
+                    </button>
+                    <button id="btn-compare" type="button"
+                        class="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-sm font-semibold transition-all flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7"></path>
+                        </svg>
+                        <span id="btn-compare-label">Compare: OFF</span>
+                    </button>
+
+                    <!-- Site B Selector (Visible when Compare is active) -->
+                    <div id="compare-site-b-box" class="hidden pt-2 border-t border-slate-800/80 space-y-1.5">
+                        <label for="select-compare-b" class="block text-[11px] font-semibold text-amber-400">Site B (Compare Target)</label>
+                        <div class="relative">
+                            <select id="select-compare-b"
+                                class="w-full appearance-none pl-3 pr-8 py-2 rounded-xl bg-slate-950 border border-amber-500/40 focus:border-amber-400 text-xs font-mono text-slate-200 focus:outline-none cursor-pointer">
+                                <option value="1" data-lat="-43.3100" data-lon="-11.3600">Tycho Crater (-43.31°, -11.36°)</option>
+                                <option value="2" data-lat="9.6200" data-lon="-20.0800" selected>Copernicus Crater (9.62°, -20.08°)</option>
+                                <option value="3" data-lat="24.5000" data-lon="-49.0000">Aristarchus & Vallis Schroteri (24.50°, -49.00°)</option>
+                                <option value="4" data-lat="49.2000" data-lon="3.2000">Vallis Alpes (49.20°, 3.20°)</option>
+                                <option value="5" data-lat="26.1300" data-lon="3.6300">Apollo 15 - Mons Hadley (26.13°, 3.63°)</option>
+                                <option value="6" data-lat="20.1900" data-lon="30.7700">Apollo 17 - Taurus-Littrow (20.19°, 30.77°)</option>
+                                <option value="7" data-lat="51.6000" data-lon="-9.3000">Plato Crater (51.60°, -9.30°)</option>
+                                <option value="8" data-lat="19.5000" data-lon="-1.5000">Montes Apenninus (19.50°, -1.50°)</option>
+                                <option value="9" data-lat="-21.8000" data-lon="-7.8000">Rupes Recta (-21.80°, -7.80°)</option>
+                                <option value="10" data-lat="-20.4000" data-lon="129.1000">Tsiolkovskiy Crater (-20.40°, 129.1000°)</option>
+                                <option value="11" data-lat="-89.4500" data-lon="-137.3100">Polo sud - Cresta di Shackleton (-89.45°, -137.31°)</option>
+                                <option value="12" data-lat="-85.9900" data-lon="-2.9300">Polo sud - Massiccio Malapert (-85.99°, -2.93°)</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Skeleton status note at bottom of sidebar -->
+            <div class="p-4 border-t border-slate-800 bg-slate-950/50">
+                <p class="text-[11px] text-slate-500 leading-relaxed">
+                    Connected to Python Backend: USGS LOLA 118m DEM + NASA JPL Horizons Ephemeris.
+                </p>
+            </div>
+        </aside>
+
+        <!-- =============================================================
+             3. MAIN WORKSPACE AREA (Contains the 2 switchable views)
+        ============================================================== -->
+        <main class="flex-1 min-w-[320px] flex flex-col bg-slate-950 overflow-y-auto">
+
+            <!-- Summary Telemetry Bar (Always visible at top) -->
+            <div class="bg-slate-900/50 border-b border-slate-800/80 px-4 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4 text-xs font-mono">
+                <div class="flex flex-wrap items-center gap-4 sm:gap-6">
+                    <div>
+                        <span class="text-slate-500">SITE:</span>
+                        <span id="display-site" class="text-emerald-300 font-semibold">SITE_PLACEHOLDER_01</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-500">LAT:</span>
+                        <span id="display-lat" class="text-slate-200 font-semibold">[LAT_PLACEHOLDER]</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-500">LON:</span>
+                        <span id="display-lon" class="text-slate-200 font-semibold">[LON_PLACEHOLDER]</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-500">DATE:</span>
+                        <span id="display-date" class="text-indigo-300 font-semibold">--/--/----</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-500">TIME:</span>
+                        <span id="display-time" class="text-indigo-300 font-semibold">--:--</span>
+                    </div>
+                </div>
+                <div id="status-toast" class="text-[11px] text-emerald-400 opacity-0 transition-opacity duration-300">
+                    ✓ Parameters updated
+                </div>
+            </div>
+
+            <!-- =========================================================
+                 VIEW 1: 3D MOON GLOBE (1 OR 2 CURSORS ON SAME MOON)
+            ========================================================== -->
+            <section id="view-moon" class="flex-1 p-4 lg:p-8 flex flex-col gap-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                        <span class="text-xs font-mono uppercase tracking-wider text-indigo-400">Window 01 / 03</span>
+                        <h2 class="text-xl sm:text-2xl font-bold text-white">Moon Surface & Coordinates</h2>
+                    </div>
+                    <span id="moon-mode-badge" class="text-xs font-mono text-slate-400 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg self-start">
+                        Interactive 3D Globe (Single Site)
+                    </span>
+                </div>
+
+                <!-- Moon Interactive 3D Viewport Container -->
+                <div id="moon-canvas-container" class="flex-1 min-h-[400px] rounded-2xl border border-slate-800 bg-slate-950 relative overflow-hidden shadow-2xl">
+                    <!-- Top-Left Viewport Label -->
+                    <div class="absolute top-3.5 left-3.5 z-10 flex items-center gap-2 pointer-events-none">
+                        <span class="text-[11px] font-mono text-slate-300 bg-slate-900/85 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-700/80 shadow">
+                            3D_LUNAR_GLOBE // WEBGL
+                        </span>
+                        <span id="hud-zoom-readout" class="text-[11px] font-mono text-indigo-300 bg-slate-900/85 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-700/80 shadow">
+                            DIST: 3.20 R☾
+                        </span>
+                    </div>
+
+                    <!-- Top-Right Interactive Camera Controls -->
+                    <div class="absolute top-3.5 right-3.5 z-10 flex items-center gap-2">
+                        <button id="btn-auto-rotate" type="button"
+                            class="px-2.5 py-1.5 rounded-lg text-xs font-mono bg-slate-900/85 hover:bg-slate-800 text-slate-300 border border-slate-700/80 backdrop-blur-md transition-all flex items-center gap-1.5 shadow">
+                            <span id="auto-rotate-dot" class="w-2 h-2 rounded-full bg-slate-500"></span>
+                            <span>Auto-Rotate</span>
+                        </button>
+                        <button id="btn-reset-camera" type="button"
+                            class="px-2.5 py-1.5 rounded-lg text-xs font-mono bg-indigo-600/90 hover:bg-indigo-500 text-white border border-indigo-400/40 backdrop-blur-md transition-all flex items-center gap-1.5 shadow">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            <span>Reset Camera</span>
+                        </button>
+                    </div>
+
+                    <!-- Bottom Floating Navigation Hints HUD -->
+                    <div class="absolute bottom-3.5 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
+                        <div class="px-3.5 py-1.5 rounded-full bg-slate-900/85 backdrop-blur-md border border-slate-700/80 text-[11px] font-mono text-slate-300 whitespace-nowrap shadow-lg">
+                            Drag to rotate • Scroll to zoom • Right-drag to pan
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Site A & Site B Cards with Explore Buttons -->
+                <div id="moon-sites-cards" class="grid grid-cols-1 gap-4">
+                    <!-- Site A Card -->
+                    <div class="p-4 rounded-xl bg-slate-900 border border-emerald-500/30 flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                            <span class="w-3 h-3 rounded-full bg-emerald-400 shrink-0"></span>
+                            <div>
+                                <p class="text-[11px] font-mono text-emerald-400 uppercase">Site A (Primary Cursor)</p>
+                                <p id="moon-card-a-name" class="text-sm font-mono font-semibold text-white">Tycho Crater (-43.31°, -11.36°)</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 text-xs font-mono">
+                            <div>
+                                <span class="text-slate-500 block text-[10px]">ELEVATION</span>
+                                <span id="card-site-elev" class="text-indigo-300 font-semibold">-- m</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-500 block text-[10px]">ILLUMINATION</span>
+                                <span id="card-illumination" class="text-emerald-300 font-semibold">-- %</span>
+                            </div>
+                            <button type="button" data-explore="a"
+                                class="btn-explore-site px-3.5 py-2 rounded-lg text-xs font-mono font-semibold bg-amber-500/90 hover:bg-amber-400 text-slate-950 transition-all shadow">
+                                Explore Surface →
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Site B Card (Shown when Compare is active) -->
+                    <div id="moon-card-b" class="hidden p-4 rounded-xl bg-slate-900 border border-amber-500/30 flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                            <span class="w-3 h-3 rounded-full bg-amber-400 shrink-0"></span>
+                            <div>
+                                <p class="text-[11px] font-mono text-amber-400 uppercase">Site B (Compare Cursor)</p>
+                                <p id="moon-card-b-name" class="text-sm font-mono font-semibold text-white">Copernicus Crater (9.62°, -20.08°)</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 text-xs font-mono">
+                            <div>
+                                <span class="text-slate-500 block text-[10px]">ELEVATION</span>
+                                <span id="card-site-b-elev" class="text-indigo-300 font-semibold">-- m</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-500 block text-[10px]">ILLUMINATION</span>
+                                <span id="card-site-b-illum" class="text-amber-300 font-semibold">-- %</span>
+                            </div>
+                            <button type="button" data-explore="b"
+                                class="btn-explore-site px-3.5 py-2 rounded-lg text-xs font-mono font-semibold bg-amber-500/90 hover:bg-amber-400 text-slate-950 transition-all shadow">
+                                Explore Surface →
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- =========================================================
+                 VIEW 2: 3D TERRAIN VISUALIZER (lunar.py) — 1 OR 2 SIDE-BY-SIDE
+            ========================================================== -->
+            <section id="view-dem" class="hidden flex-1 p-4 lg:p-8 flex flex-col gap-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                        <span class="text-xs font-mono uppercase tracking-wider text-emerald-400">Window 02 / 03</span>
+                        <h2 class="text-xl sm:text-2xl font-bold text-white">3D Lunar Terrain & Shadows (lunar.py)</h2>
+                    </div>
+                    <span id="dem-mode-badge" class="text-xs font-mono text-slate-400 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg self-start">
+                        USGS LOLA 118m DEM
+                    </span>
+                </div>
+
+                <!-- Grid: 1 column normally, 2 columns side-by-side when Compare is ON -->
+                <div id="dem-grid" class="grid grid-cols-1 gap-6 flex-1">
+                    <!-- 3D DEM SITE A -->
+                    <div class="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 flex flex-col gap-3">
+                        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                            <div>
+                                <span class="text-[10px] font-mono uppercase text-emerald-400 block">Site A // 3D DEM</span>
+                                <h3 id="dem-a-title" class="text-sm font-mono font-semibold text-white">Tycho Crater</h3>
+                            </div>
+                            <button type="button" data-explore="a"
+                                class="btn-explore-site px-3 py-1.5 rounded-lg text-xs font-mono font-semibold bg-amber-500/90 hover:bg-amber-400 text-slate-950 transition-all">
+                                Explore Surface →
+                            </button>
+                        </div>
+                        <div class="flex-1 min-h-[420px] rounded-xl overflow-hidden bg-slate-950 border border-slate-800 relative">
+                            <div id="dem-a-loading" class="hidden absolute inset-0 z-10 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center">
+                                <div class="w-7 h-7 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+                            <div id="dem3d-plotly-container" class="w-full h-full min-h-[410px] flex items-center justify-center text-xs font-mono text-slate-400">
+                                Computing 3D DEM from lunar.py...
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3D DEM SITE B (Shown side-by-side when Compare is ON) -->
+                    <div id="dem-b-card" class="hidden rounded-2xl border border-slate-800 bg-slate-900/50 p-4 flex flex-col gap-3">
+                        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                            <div>
+                                <span class="text-[10px] font-mono uppercase text-amber-400 block">Site B // 3D DEM</span>
+                                <h3 id="dem-b-title" class="text-sm font-mono font-semibold text-white">Copernicus Crater</h3>
+                            </div>
+                            <button type="button" data-explore="b"
+                                class="btn-explore-site px-3 py-1.5 rounded-lg text-xs font-mono font-semibold bg-amber-500/90 hover:bg-amber-400 text-slate-950 transition-all">
+                                Explore Surface →
+                            </button>
+                        </div>
+                        <div class="flex-1 min-h-[420px] rounded-xl overflow-hidden bg-slate-950 border border-slate-800 relative">
+                            <div id="dem-b-loading" class="hidden absolute inset-0 z-10 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center">
+                                <div class="w-7 h-7 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+                            <div id="dem3d-b-plotly-container" class="w-full h-full min-h-[410px] flex items-center justify-center text-xs font-mono text-slate-400">
+                                Computing 3D DEM from lunar.py...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- =========================================================
+                 VIEW 3: FIRST-PERSON LUNAR SURFACE (FULL-SCREEN EXPLORE)
+            ========================================================== -->
+            <section id="view-horizon" class="hidden flex-1 flex flex-col bg-slate-950 relative">
+                <!-- Compact Top Overlay Bar inside Fullscreen First-Person View -->
+                <div class="px-4 lg:px-6 py-2.5 bg-slate-900/90 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <span class="text-[11px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                            First-Person Surface View
+                        </span>
+                        <h2 id="fp-site-title" class="text-sm sm:text-base font-bold text-white font-mono">
+                            Tycho Crater (-43.31°, -11.36°)
+                        </h2>
+                    </div>
+                    <div class="flex items-center gap-4 text-xs font-mono">
+                        <span>SUN: <strong id="card-sun-pos" class="text-amber-300">--.-° / --.-°</strong></span>
+                        <span>EARTH: <strong id="card-earth-pos" class="text-sky-300">--.-° / --.-°</strong></span>
+                        <span id="card-horizon-range" class="hidden md:inline text-slate-400">--.-° to --.-°</span>
+                    </div>
+                </div>
+
+                <!-- Full-Screen 360° First-Person Horizon Profile Container -->
+                <div class="flex-1 min-h-[540px] w-full relative overflow-hidden">
+                    <div id="horizon-loading" class="hidden absolute inset-0 z-20 bg-slate-950/85 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
+                        <div class="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+                        <p class="text-xs font-mono text-amber-300">Rendering First-Person Lunar Surface & Ephemeris...</p>
+                    </div>
+                    <div id="horizon-plotly-container" class="w-full h-full min-h-[540px]"></div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- =================================================================
+         BASE JAVASCRIPT & 3D THREE.JS MOON ENGINE
+    ================================================================== -->
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // View & Tab references
+            const viewMoon = document.getElementById('view-moon');
+            const viewHorizon = document.getElementById('view-horizon');
+            const tabMoon = document.getElementById('tab-moon');
+            const tabHorizon = document.getElementById('tab-horizon');
+
+            // Input & Telemetry references
+            const selectLandingSite = document.getElementById('select-landing-site');
+            const inputLat = document.getElementById('input-lat');
+            const inputLon = document.getElementById('input-lon');
+            const inputDate = document.getElementById('input-date');
+            const inputTime = document.getElementById('input-time');
+            const displaySite = document.getElementById('display-site');
+            const displayLat = document.getElementById('display-lat');
+            const displayLon = document.getElementById('display-lon');
+            const displayDate = document.getElementById('display-date');
+            const displayTime = document.getElementById('display-time');
+            const statusToast = document.getElementById('status-toast');
+
+            // -------------------------------------------------------------
+            // 3D MOON SCENE INITIALIZATION (Pre-made Texture, Flat Lit)
+            // -------------------------------------------------------------
+            const canvasContainer = document.getElementById('moon-canvas-container');
+            const hudZoomReadout = document.getElementById('hud-zoom-readout');
+            const btnAutoRotate = document.getElementById('btn-auto-rotate');
+            const autoRotateDot = document.getElementById('auto-rotate-dot');
+            const btnResetCamera = document.getElementById('btn-reset-camera');
+
+            const MOON_RADIUS = 1.0;
+            const DEFAULT_CAM_DIST = 3.2;
+
+            // Scene & Starfield Background
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x030712);
+
+            const camera = new THREE.PerspectiveCamera(42, 1, 0.05, 100);
+            camera.position.set(0, 0.35, DEFAULT_CAM_DIST);
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            canvasContainer.appendChild(renderer.domElement);
+
+            // OrbitControls: Left-drag orbit, scroll zoom, right-drag pan, touch gestures
+            const controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.06;
+            controls.rotateSpeed = 0.65;
+            controls.zoomSpeed = 0.85;
+            controls.panSpeed = 0.65;
+            controls.minDistance = 1.35;
+            controls.maxDistance = 8.5;
+            controls.autoRotate = false;
+            controls.autoRotateSpeed = 0.6;
+
+            // Procedural Starfield
+            function createStarfield() {
+                const starCount = 1800;
+                const positions = new Float32Array(starCount * 3);
+                const colors = new Float32Array(starCount * 3);
+                let seed = 4219;
+                const rand = () => {
+                    seed = (seed * 16807) % 2147483647;
+                    return (seed - 1) / 2147483646;
+                };
+
+                for (let i = 0; i < starCount; i++) {
+                    const r = 28 + rand() * 35;
+                    const theta = rand() * Math.PI * 2;
+                    const phi = Math.acos(2 * rand() - 1);
+                    positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+                    positions[i * 3 + 1] = r * Math.cos(phi);
+                    positions[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+
+                    const tint = 0.72 + rand() * 0.28;
+                    colors[i * 3] = tint * (0.92 + rand() * 0.08);
+                    colors[i * 3 + 1] = tint * (0.94 + rand() * 0.06);
+                    colors[i * 3 + 2] = tint;
+                }
+
+                const geom = new THREE.BufferGeometry();
+                geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+                const mat = new THREE.PointsMaterial({
+                    size: 0.14,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.85
+                });
+                return new THREE.Points(geom, mat);
+            }
+            scene.add(createStarfield());
+
+            // Lightweight offline fallback texture if external CDN texture fails
+            function createFallbackLunarTexture() {
+                const canvas = document.createElement('canvas');
+                canvas.width = 512;
+                canvas.height = 256;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#a8a6a1';
+                ctx.fillRect(0, 0, 512, 256);
+                let seed = 1969;
+                const rand = () => {
+                    seed = (seed * 16807) % 2147483647;
+                    return (seed - 1) / 2147483646;
+                };
+                for (let i = 0; i < 240; i++) {
+                    const x = rand() * 512;
+                    const y = rand() * 256;
+                    const r = 2 + Math.pow(rand(), 2.5) * 18;
+                    ctx.fillStyle = rand() > 0.45 ? 'rgba(82, 82, 85, 0.35)' : 'rgba(215, 213, 208, 0.25)';
+                    ctx.beginPath();
+                    ctx.arc(x, y, r, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                const tex = new THREE.CanvasTexture(canvas);
+                tex.colorSpace = THREE.SRGBColorSpace;
+                return tex;
+            }
+
+            // Moon Sphere Mesh with MeshBasicMaterial (100% uniform illumination, zero shadows)
+            const moonGroup = new THREE.Group();
+            scene.add(moonGroup);
+
+            const moonGeometry = new THREE.SphereGeometry(MOON_RADIUS, 96, 96);
+            const moonMaterial = new THREE.MeshBasicMaterial({
+                color: 0xffffff
+            });
+
+            const textureLoader = new THREE.TextureLoader();
+            textureLoader.setCrossOrigin('anonymous');
+            const MOON_TEXTURE_URL = 'https://raw.githubusercontent.com/mrdoob/three.js/r160/examples/textures/planets/moon_1024.jpg';
+
+            textureLoader.load(
+                MOON_TEXTURE_URL,
+                (loadedTexture) => {
+                    loadedTexture.colorSpace = THREE.SRGBColorSpace;
+                    moonMaterial.map = loadedTexture;
+                    moonMaterial.needsUpdate = true;
+                },
+                undefined,
+                () => {
+                    moonMaterial.map = createFallbackLunarTexture();
+                    moonMaterial.needsUpdate = true;
+                }
+            );
+
+            const moonMesh = new THREE.Mesh(moonGeometry, moonMaterial);
+            // Align prime meridian (0° longitude) of standard equirectangular Moon map with +Z axis
+            moonMesh.rotation.y = -Math.PI / 2;
+            moonGroup.add(moonMesh);
+
+            // Subtle Prime Meridian & Equator Reference Grid (faint technical overlay)
+            const gridSphereGeo = new THREE.SphereGeometry(MOON_RADIUS * 1.002, 36, 18);
+            const gridWireframe = new THREE.WireframeGeometry(gridSphereGeo);
+            const gridMat = new THREE.LineBasicMaterial({
+                color: 0x6366f1,
+                transparent: true,
+                opacity: 0.08
+            });
+            const lunarGridLines = new THREE.LineSegments(gridWireframe, gridMat);
+            moonGroup.add(lunarGridLines);
+
+            // 3D Surface Coordinate Marker Pin & Pulse Ring
+            const markerGroup = new THREE.Group();
+            moonGroup.add(markerGroup);
+
+            const ringGeo = new THREE.RingGeometry(0.026, 0.038, 32);
+            const ringMat = new THREE.MeshBasicMaterial({
+                color: 0x34d399,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.95
+            });
+            const markerRing = new THREE.Mesh(ringGeo, ringMat);
+            markerGroup.add(markerRing);
+
+            const pulseRingGeo = new THREE.RingGeometry(0.042, 0.052, 32);
+            const pulseRingMat = new THREE.MeshBasicMaterial({
+                color: 0x6366f1,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.65
+            });
+            const markerPulseRing = new THREE.Mesh(pulseRingGeo, pulseRingMat);
+            markerGroup.add(markerPulseRing);
+
+            const pinStemGeo = new THREE.CylinderGeometry(0.004, 0.004, 0.08, 12);
+            pinStemGeo.rotateX(Math.PI / 2);
+            pinStemGeo.translate(0, 0, 0.04);
+            const pinStemMat = new THREE.MeshBasicMaterial({ color: 0x34d399 });
+            const pinStem = new THREE.Mesh(pinStemGeo, pinStemMat);
+            markerGroup.add(pinStem);
+
+            const pinHeadGeo = new THREE.SphereGeometry(0.013, 16, 16);
+            pinHeadGeo.translate(0, 0, 0.085);
+            const pinHeadMat = new THREE.MeshBasicMaterial({ color: 0x6ee7b7 });
+            const pinHead = new THREE.Mesh(pinHeadGeo, pinHeadMat);
+            markerGroup.add(pinHead);
+
+            // Convert Selenographic Latitude & Longitude (degrees) to 3D Cartesian vector
+            // Aligned so Lat=0°, Lon=0° faces +Z (front center of the Moon's nearside)
+            function latLonToVector3(latDeg, lonDeg, radius = MOON_RADIUS) {
+                const lat = THREE.MathUtils.degToRad(latDeg);
+                const lon = THREE.MathUtils.degToRad(lonDeg);
+                const x = radius * Math.cos(lat) * Math.sin(lon);
+                const y = radius * Math.sin(lat);
+                const z = radius * Math.cos(lat) * Math.cos(lon);
+                return new THREE.Vector3(x, y, z);
+            }
+
+            // Update 3D Marker Position on the Moon surface
+            function updateSurfaceMarker(latDeg, lonDeg) {
+                const surfacePos = latLonToVector3(latDeg, lonDeg, MOON_RADIUS * 1.004);
+                markerGroup.position.copy(surfacePos);
+                markerGroup.lookAt(surfacePos.clone().multiplyScalar(2));
+            }
+
+            // Smooth Camera Transition State toward selected coordinate
+            let cameraTransition = null;
+
+            function focusCameraOnCoordinates(latDeg, lonDeg) {
+                const targetDir = latLonToVector3(latDeg, lonDeg, 1).normalize();
+                const currentDist = THREE.MathUtils.clamp(camera.position.distanceTo(controls.target), 1.8, 4.2);
+                const endCamPos = targetDir.clone().multiplyScalar(currentDist);
+
+                cameraTransition = {
+                    startPos: camera.position.clone(),
+                    endPos: endCamPos,
+                    startTarget: controls.target.clone(),
+                    endTarget: new THREE.Vector3(0, 0, 0),
+                    progress: 0
+                };
+            }
+
+            // Responsive Resize Handling via ResizeObserver
+            function resizeMoonRenderer() {
+                const rect = canvasContainer.getBoundingClientRect();
+                if (rect.width > 0 && rect.height > 0) {
+                    camera.aspect = rect.width / rect.height;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(rect.width, rect.height, false);
+                }
+            }
+
+            const resizeObserver = new ResizeObserver(() => {
+                resizeMoonRenderer();
+            });
+            resizeObserver.observe(canvasContainer);
+            resizeMoonRenderer();
+
+            // HUD Controls: Auto-Rotate & Reset Camera
+            btnAutoRotate.addEventListener('click', () => {
+                controls.autoRotate = !controls.autoRotate;
+                if (controls.autoRotate) {
+                    btnAutoRotate.classList.add('border-indigo-500/70', 'text-indigo-200', 'bg-indigo-950/80');
+                    autoRotateDot.classList.remove('bg-slate-500');
+                    autoRotateDot.classList.add('bg-emerald-400');
+                } else {
+                    btnAutoRotate.classList.remove('border-indigo-500/70', 'text-indigo-200', 'bg-indigo-950/80');
+                    autoRotateDot.classList.add('bg-slate-500');
+                    autoRotateDot.classList.remove('bg-emerald-400');
+                }
+            });
+
+            btnResetCamera.addEventListener('click', () => {
+                cameraTransition = {
+                    startPos: camera.position.clone(),
+                    endPos: new THREE.Vector3(0, 0.35, DEFAULT_CAM_DIST),
+                    startTarget: controls.target.clone(),
+                    endTarget: new THREE.Vector3(0, 0, 0),
+                    progress: 0
+                };
+            });
+
+            // Cancel smooth transition if user grabs the globe manually
+            controls.addEventListener('start', () => {
+                cameraTransition = null;
+            });
+
+            // Animation Loop
+            const clock = new THREE.Clock();
+            function animate() {
+                requestAnimationFrame(animate);
+                const elapsed = clock.getElapsedTime();
+
+                // Animate marker pulse ring
+                const pulseScale = 1 + 0.25 * Math.sin(elapsed * 3.2);
+                markerPulseRing.scale.set(pulseScale, pulseScale, 1);
+                pulseRingMat.opacity = 0.45 + 0.3 * Math.cos(elapsed * 3.2);
+
+                // Smooth camera focus interpolation
+                if (cameraTransition) {
+                    cameraTransition.progress = Math.min(1, cameraTransition.progress + 0.035);
+                    const ease = 1 - Math.pow(1 - cameraTransition.progress, 3);
+                    camera.position.lerpVectors(cameraTransition.startPos, cameraTransition.endPos, ease);
+                    controls.target.lerpVectors(cameraTransition.startTarget, cameraTransition.endTarget, ease);
+                    if (cameraTransition.progress >= 1) {
+                        cameraTransition = null;
+                    }
+                }
+
+                controls.update();
+
+                // Update live zoom/distance readout in HUD
+                const camDist = camera.position.distanceTo(controls.target);
+                hudZoomReadout.textContent = `DIST: ${camDist.toFixed(2)} R☾`;
+
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            // -------------------------------------------------------------
+            // 1. Switch between the 3 Views (Moon, 3D Terrain, First-Person)
+            // -------------------------------------------------------------
+            const viewDem = document.getElementById('view-dem');
+            const tabDem = document.getElementById('tab-dem');
+            const btnCompare = document.getElementById('btn-compare');
+            const btnCompareLabel = document.getElementById('btn-compare-label');
+            const compareSiteBBox = document.getElementById('compare-site-b-box');
+            const selectCompareB = document.getElementById('select-compare-b');
+
+            let isCompareActive = false;
+            let activeExploreSlot = 'a'; // 'a' or 'b'
+            let latestDataA = null;
+            let latestDataB = null;
+
+            // Second cursor (Site B) on the SAME 3D Moon
+            const markerGroupB = new THREE.Group();
+            markerGroupB.visible = false;
+            moonGroup.add(markerGroupB);
+
+            const ringB = new THREE.Mesh(
+                new THREE.RingGeometry(0.026, 0.038, 32),
+                new THREE.MeshBasicMaterial({ color: 0xfbbf24, side: THREE.DoubleSide })
+            );
+            markerGroupB.add(ringB);
+
+            const stemGeoB = new THREE.CylinderGeometry(0.004, 0.004, 0.08, 12);
+            stemGeoB.rotateX(Math.PI / 2);
+            stemGeoB.translate(0, 0, 0.04);
+            markerGroupB.add(new THREE.Mesh(stemGeoB, new THREE.MeshBasicMaterial({ color: 0xfbbf24 })));
+
+            const headGeoB = new THREE.SphereGeometry(0.013, 16, 16);
+            headGeoB.translate(0, 0, 0.085);
+            markerGroupB.add(new THREE.Mesh(headGeoB, new THREE.MeshBasicMaterial({ color: 0xfde68a })));
+
+            function updateSurfaceMarkerB(latDeg, lonDeg) {
+                const surfacePos = latLonToVector3(latDeg, lonDeg, MOON_RADIUS * 1.004);
+                markerGroupB.position.copy(surfacePos);
+                markerGroupB.lookAt(surfacePos.clone().multiplyScalar(2));
+            }
+
+            function setTabStyle(tabEl, active) {
+                if (active) {
+                    tabEl.classList.add('bg-indigo-600', 'text-white', 'shadow-sm', 'font-semibold');
+                    tabEl.classList.remove('text-slate-400', 'font-medium');
+                } else {
+                    tabEl.classList.remove('bg-indigo-600', 'text-white', 'shadow-sm', 'font-semibold');
+                    tabEl.classList.add('text-slate-400', 'font-medium');
+                }
+            }
+
+            function switchView(targetView) {
+                viewMoon.classList.add('hidden');
+                viewDem.classList.add('hidden');
+                viewHorizon.classList.add('hidden');
+
+                setTabStyle(tabMoon, targetView === 'moon');
+                setTabStyle(tabDem, targetView === 'dem');
+                setTabStyle(tabHorizon, targetView === 'horizon');
+
+                if (targetView === 'dem') {
+                    viewDem.classList.remove('hidden');
+                    setTimeout(() => {
+                        if (window.Plotly) {
+                            const da = document.getElementById('dem3d-plotly-container');
+                            const db = document.getElementById('dem3d-b-plotly-container');
+                            if (da && da.data) Plotly.Plots.resize(da);
+                            if (db && db.data && isCompareActive) Plotly.Plots.resize(db);
+                        }
+                    }, 50);
+                } else if (targetView === 'horizon') {
+                    viewHorizon.classList.remove('hidden');
+                    setTimeout(() => {
+                        if (window.Plotly && horizonContainer.data) {
+                            Plotly.Plots.resize(horizonContainer);
+                        }
+                    }, 50);
+                } else {
+                    viewMoon.classList.remove('hidden');
+                    resizeMoonRenderer();
+                }
+            }
+
+            tabMoon.addEventListener('click', () => switchView('moon'));
+            tabDem.addEventListener('click', () => switchView('dem'));
+            tabHorizon.addEventListener('click', () => switchView('horizon'));
+
+            // Toggle Compare Mode ON/OFF
+            function applyCompareUIState() {
+                const demGrid = document.getElementById('dem-grid');
+                const demBCard = document.getElementById('dem-b-card');
+                const moonCardB = document.getElementById('moon-card-b');
+                const moonSitesCards = document.getElementById('moon-sites-cards');
+                const moonBadge = document.getElementById('moon-mode-badge');
+                const demBadge = document.getElementById('dem-mode-badge');
+
+                if (isCompareActive) {
+                    btnCompare.classList.add('bg-emerald-600/20', 'border-emerald-500/60', 'text-emerald-300');
+                    btnCompareLabel.textContent = 'Compare: ON';
+                    compareSiteBBox.classList.remove('hidden');
+
+                    // 1. Show 2nd cursor on same 3D Moon + Site B card
+                    markerGroupB.visible = true;
+                    moonCardB.classList.remove('hidden');
+                    moonSitesCards.classList.add('xl:grid-cols-2');
+                    moonBadge.textContent = 'Interactive 3D Globe (2 Cursors: Site A & Site B)';
+
+                    // 2. Show 2 3D DEM visualizers side-by-side in View 2
+                    demGrid.classList.add('xl:grid-cols-2');
+                    demBCard.classList.remove('hidden');
+                    demBadge.textContent = 'Side-by-Side 3D DEM Comparison';
+
+                    syncSiteBInfo();
+                    runSimulationForSlot('b');
+                } else {
+                    btnCompare.classList.remove('bg-emerald-600/20', 'border-emerald-500/60', 'text-emerald-300');
+                    btnCompareLabel.textContent = 'Compare: OFF';
+                    compareSiteBBox.classList.add('hidden');
+
+                    markerGroupB.visible = false;
+                    moonCardB.classList.add('hidden');
+                    moonSitesCards.classList.remove('xl:grid-cols-2');
+                    moonBadge.textContent = 'Interactive 3D Globe (Single Site)';
+
+                    demGrid.classList.remove('xl:grid-cols-2');
+                    demBCard.classList.add('hidden');
+                    demBadge.textContent = 'USGS LOLA 118m DEM';
+                }
+
+                // Resize Plotly canvases if currently viewing 3D DEM
+                if (!viewDem.classList.contains('hidden') && window.Plotly) {
+                    setTimeout(() => {
+                        const da = document.getElementById('dem3d-plotly-container');
+                        const db = document.getElementById('dem3d-b-plotly-container');
+                        if (da && da.data) Plotly.Plots.resize(da);
+                        if (db && db.data) Plotly.Plots.resize(db);
+                    }, 60);
+                }
+            }
+
+            btnCompare.addEventListener('click', () => {
+                isCompareActive = !isCompareActive;
+                applyCompareUIState();
+            });
+
+            function syncSiteBInfo() {
+                const optB = selectCompareB.options[selectCompareB.selectedIndex];
+                if (!optB) return;
+                const latB = parseFloat(optB.dataset.lat) || 0;
+                const lonB = parseFloat(optB.dataset.lon) || 0;
+                const labelB = optB.textContent.trim();
+
+                document.getElementById('moon-card-b-name').textContent = labelB;
+                document.getElementById('dem-b-title').textContent = labelB;
+                updateSurfaceMarkerB(latB, lonB);
+            }
+
+            selectCompareB.addEventListener('change', () => {
+                syncSiteBInfo();
+                if (isCompareActive) {
+                    runSimulationForSlot('b');
+                }
+            });
+
+            // 2. Set current Date and Time
+            function setNowDateTime() {
+                const now = new Date();
+                const yyyy = now.getFullYear();
+                const mm = String(now.getMonth() + 1).padStart(2, '0');
+                const dd = String(now.getDate()).padStart(2, '0');
+                const hh = String(now.getHours()).padStart(2, '0');
+                const min = String(now.getMinutes()).padStart(2, '0');
+
+                inputDate.value = `${yyyy}-${mm}-${dd}`;
+                inputTime.value = `${hh}:${min}`;
+            }
+
+            // 3. Synchronize sidebar parameters with top telemetry bar & 3D marker A
+            function syncTelemetry(showFeedback = false, focus3D = false) {
+                const latVal = parseFloat(inputLat.value);
+                const lonVal = parseFloat(inputLon.value);
+                const selectedOption = selectLandingSite.options[selectLandingSite.selectedIndex];
+
+                const siteLabel = selectedOption
+                    ? selectedOption.textContent.trim()
+                    : `Custom (${latVal.toFixed(2)}°, ${lonVal.toFixed(2)}°)`;
+
+                displaySite.textContent = siteLabel;
+                displayLat.textContent = !isNaN(latVal) ? `${latVal.toFixed(4)}°` : '[LAT_PLACEHOLDER]';
+                displayLon.textContent = !isNaN(lonVal) ? `${lonVal.toFixed(4)}°` : '[LON_PLACEHOLDER]';
+                displayDate.textContent = inputDate.value || '--/--/----';
+                displayTime.textContent = inputTime.value || '--:--';
+
+                document.getElementById('moon-card-a-name').textContent = siteLabel;
+                document.getElementById('dem-a-title').textContent = siteLabel;
+
+                const validLat = !isNaN(latVal) ? THREE.MathUtils.clamp(latVal, -90, 90) : 0;
+                const validLon = !isNaN(lonVal) ? THREE.MathUtils.clamp(lonVal, -180, 180) : 0;
+                updateSurfaceMarker(validLat, validLon);
+
+                if (focus3D) {
+                    focusCameraOnCoordinates(validLat, validLon);
+                }
+
+                if (showFeedback) {
+                    statusToast.classList.remove('opacity-0');
+                    setTimeout(() => {
+                        statusToast.classList.add('opacity-0');
+                    }, 2000);
+                }
+            }
+
+            // Handle Landing Site Dropdown selection
+            selectLandingSite.addEventListener('change', () => {
+                const selectedOption = selectLandingSite.options[selectLandingSite.selectedIndex];
+                if (selectedOption && selectedOption.value !== 'custom') {
+                    const lat = parseFloat(selectedOption.dataset.lat);
+                    const lon = parseFloat(selectedOption.dataset.lon);
+                    if (!isNaN(lat)) inputLat.value = lat.toFixed(4);
+                    if (!isNaN(lon)) inputLon.value = lon.toFixed(4);
+                }
+                syncTelemetry(true, true);
+                runSimulationForSlot('a');
+            });
+
+            function markCustomCoordinates() {
+                if (selectLandingSite.value !== 'custom') {
+                    selectLandingSite.value = 'custom';
+                }
+            }
+
+            document.getElementById('btn-now').addEventListener('click', () => {
+                setNowDateTime();
+                syncTelemetry(true, false);
+            });
+
+            document.getElementById('btn-update').addEventListener('click', () => {
+                syncTelemetry(true, true);
+                runSimulationForSlot('a');
+                if (isCompareActive) {
+                    runSimulationForSlot('b');
+                }
+            });
+
+            // 4. Custom step arrows and step precision for Latitude and Longitude
+            let currentCoordStep = 0.1;
+            const stepButtons = document.querySelectorAll('.coord-step-btn');
+            const arrowButtons = document.querySelectorAll('.coord-arrow-btn');
+
+            stepButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    currentCoordStep = parseFloat(btn.dataset.step);
+                    stepButtons.forEach(b => {
+                        b.classList.remove('bg-indigo-600', 'text-white', 'font-semibold');
+                        b.classList.add('text-slate-400');
+                    });
+                    btn.classList.add('bg-indigo-600', 'text-white', 'font-semibold');
+                    btn.classList.remove('text-slate-400');
+                });
+            });
+
+            function adjustCoordinate(inputId, direction) {
+                const input = document.getElementById(inputId);
+                if (!input) return;
+
+                const min = parseFloat(input.min);
+                const max = parseFloat(input.max);
+                const current = parseFloat(input.value) || 0;
+                let next = current + (direction * currentCoordStep);
+
+                if (!isNaN(min) && next < min) next = min;
+                if (!isNaN(max) && next > max) next = max;
+
+                input.value = (Math.round(next * 10000) / 10000).toFixed(4);
+                markCustomCoordinates();
+                syncTelemetry(false, false);
+            }
+
+            arrowButtons.forEach(btn => {
+                let holdTimeout = null;
+                let holdInterval = null;
+
+                const startAdjust = (e) => {
+                    e.preventDefault();
+                    const targetId = btn.dataset.target;
+                    const dir = parseInt(btn.dataset.dir, 10);
+
+                    adjustCoordinate(targetId, dir);
+
+                    holdTimeout = setTimeout(() => {
+                        holdInterval = setInterval(() => {
+                            adjustCoordinate(targetId, dir);
+                        }, 65);
+                    }, 320);
+                };
+
+                const stopAdjust = () => {
+                    clearTimeout(holdTimeout);
+                    clearInterval(holdInterval);
+                    holdTimeout = null;
+                    holdInterval = null;
+                };
+
+                btn.addEventListener('pointerdown', startAdjust);
+                btn.addEventListener('pointerup', stopAdjust);
+                btn.addEventListener('pointerleave', stopAdjust);
+                btn.addEventListener('pointercancel', stopAdjust);
+            });
+
+            [inputLat, inputLon].forEach(inp => {
+                inp.addEventListener('input', () => {
+                    markCustomCoordinates();
+                    syncTelemetry(false, false);
+                });
+            });
+
+            // -------------------------------------------------------------
+            // 5. BACKEND PYTHON INTEGRATION & EXPLORE SURFACE BUTTONS
+            // -------------------------------------------------------------
+            const horizonLoading = document.getElementById('horizon-loading');
+            const horizonContainer = document.getElementById('horizon-plotly-container');
+            const dem3dContainer = document.getElementById('dem3d-plotly-container');
+            const dem3dBContainer = document.getElementById('dem3d-b-plotly-container');
+
+            function renderFirstPersonView(slotKey) {
+                activeExploreSlot = slotKey;
+                const data = slotKey === 'b' ? latestDataB : latestDataA;
+                const siteTitle = slotKey === 'b'
+                    ? document.getElementById('moon-card-b-name').textContent
+                    : document.getElementById('moon-card-a-name').textContent;
+
+                document.getElementById('fp-site-title').textContent = siteTitle;
+
+                if (!data) return;
+
+                document.getElementById('card-sun-pos').textContent = `${data.sun.az.toFixed(2)}° / ${data.sun.el >= 0 ? '+' : ''}${data.sun.el.toFixed(2)}°`;
+                document.getElementById('card-earth-pos').textContent = `${data.earth.az.toFixed(2)}° / ${data.earth.el >= 0 ? '+' : ''}${data.earth.el.toFixed(2)}°`;
+                document.getElementById('card-horizon-range').textContent = `Horizon: ${data.horizon_min_deg.toFixed(1)}° to +${data.horizon_max_deg.toFixed(1)}°`;
+
+                if (data.horizon_fig) {
+                    const layoutFull = Object.assign({}, data.horizon_fig.layout, {
+                        autosize: true,
+                        height: Math.max(540, window.innerHeight - 130)
+                    });
+                    Plotly.react(
+                        horizonContainer,
+                        data.horizon_fig.data,
+                        layoutFull,
+                        { scrollZoom: false, displaylogo: false, responsive: true }
+                    );
+                }
+            }
+
+            // Explore buttons on Site A and Site B cards (in both View 1 and View 2)
+            document.querySelectorAll('.btn-explore-site').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const slot = btn.dataset.explore || 'a';
+                    switchView('horizon');
+                    if ((slot === 'a' && latestDataA) || (slot === 'b' && latestDataB)) {
+                        renderFirstPersonView(slot);
+                    } else {
+                        activeExploreSlot = slot;
+                        runSimulationForSlot(slot);
+                    }
+                });
+            });
+
+            async function runSimulationForSlot(slotKey) {
+                let latVal, lonVal, siteName;
+                if (slotKey === 'b') {
+                    const optB = selectCompareB.options[selectCompareB.selectedIndex];
+                    latVal = parseFloat(optB.dataset.lat) || 0;
+                    lonVal = parseFloat(optB.dataset.lon) || 0;
+                    siteName = optB.textContent.split('(')[0].trim();
+                } else {
+                    latVal = parseFloat(inputLat.value) || 0;
+                    lonVal = parseFloat(inputLon.value) || 0;
+                    const optA = selectLandingSite.options[selectLandingSite.selectedIndex];
+                    siteName = optA ? optA.textContent.split('(')[0].trim() : 'Custom Site';
+                }
+
+                const dateStr = inputDate.value;
+                const timeStr = inputTime.value || '12:00';
+                const demLoaderEl = document.getElementById(slotKey === 'b' ? 'dem-b-loading' : 'dem-a-loading');
+                if (demLoaderEl) demLoaderEl.classList.remove('hidden');
+                if (activeExploreSlot === slotKey) horizonLoading.classList.remove('hidden');
+
+                try {
+                    const response = await fetch('/api/simulate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name: siteName,
+                            lat: latVal,
+                            lon: lonVal,
+                            date: dateStr,
+                            time: timeStr
+                        })
+                    });
+
+                    const result = await response.json();
+                    if (!response.ok || result.error) {
+                        throw new Error(result.error || 'Simulation error');
+                    }
+
+                    if (slotKey === 'b') {
+                        latestDataB = result;
+                        document.getElementById('card-site-b-elev').textContent = `${result.quota0_m.toFixed(1)} m`;
+                        document.getElementById('card-site-b-illum').textContent = `${result.illuminated_pct.toFixed(1)} %`;
+                        if (result.terrain_fig) {
+                            Plotly.react(dem3dBContainer, result.terrain_fig.data, result.terrain_fig.layout, { displaylogo: false, responsive: true });
+                        }
+                    } else {
+                        latestDataA = result;
+                        document.getElementById('card-site-elev').textContent = `${result.quota0_m.toFixed(1)} m`;
+                        document.getElementById('card-illumination').textContent = `${result.illuminated_pct.toFixed(1)} %`;
+                        if (result.terrain_fig) {
+                            Plotly.react(dem3dContainer, result.terrain_fig.data, result.terrain_fig.layout, { displaylogo: false, responsive: true });
+                        }
+                    }
+
+                    if (activeExploreSlot === slotKey) {
+                        renderFirstPersonView(slotKey);
+                    }
+                } catch (err) {
+                    console.error(err);
+                    const targetDem = slotKey === 'b' ? dem3dBContainer : dem3dContainer;
+                    targetDem.innerHTML = `<div class="p-6 text-xs font-mono text-rose-400">Backend offline / Error: ${err.message}</div>`;
+                } finally {
+                    if (demLoaderEl) demLoaderEl.classList.add('hidden');
+                    if (activeExploreSlot === slotKey) horizonLoading.classList.add('hidden');
+                }
+            }
+
+            // Initialize on startup
+            setNowDateTime();
+            syncTelemetry(false, true);
+            runSimulationForSlot('a');
+        });
+    </script>
+</body>
+</html>
