@@ -90,22 +90,22 @@
             </div>
         </div>
 
-        <!-- Navigation tabs between the 3 views -->
+        <!-- Navigation tabs between the 3 primary views -->
         <nav class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800" aria-label="View selector">
             <button id="tab-moon" type="button"
-                class="view-tab px-3 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold bg-indigo-600 text-white shadow-sm transition-all flex items-center gap-2">
+                class="view-tab px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold bg-indigo-600 text-white shadow-sm transition-all flex items-center gap-2">
                 <span class="w-2 h-2 rounded-full bg-indigo-200"></span>
-                <span>1. Moon Globe</span>
+                <span>1. Moon 3D</span>
             </button>
-            <button id="tab-terrain" type="button"
-                class="view-tab px-3 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-slate-200 transition-all flex items-center gap-2">
+            <button id="tab-dem" type="button"
+                class="view-tab px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-slate-200 transition-all flex items-center gap-2">
                 <span class="w-2 h-2 rounded-full bg-emerald-400/80"></span>
                 <span>2. 3D Terrain</span>
             </button>
-            <button id="tab-fpv" type="button"
-                class="view-tab px-3 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-slate-200 transition-all flex items-center gap-2">
+            <button id="tab-surface" type="button"
+                class="view-tab px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-slate-200 transition-all flex items-center gap-2">
                 <span class="w-2 h-2 rounded-full bg-amber-400/80"></span>
-                <span>3. Surface Explore</span>
+                <span>3. Surface 1st Person</span>
             </button>
         </nav>
     </header>
@@ -256,7 +256,7 @@
                     </div>
                 </div>
 
-                <!-- BLOCK C: UPDATE ACTION -->
+                <!-- BLOCK C: UPDATE ACTION & COMPARE TOGGLE -->
                 <div class="pt-4 border-t border-slate-800 space-y-2.5">
                     <button id="btn-update" type="button"
                         class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2">
@@ -267,19 +267,24 @@
                         <span>Visit Site</span>
                     </button>
                     <button id="btn-compare" type="button"
-                        class="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-sm font-semibold transition-all flex items-center justify-center gap-2">
-                        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7"></path>
-                        </svg>
-                        <span id="btn-compare-label">Compare: OFF</span>
+                        class="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-sm font-semibold transition-all flex items-center justify-between">
+                        <span class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7"></path>
+                            </svg>
+                            <span>Compare</span>
+                        </span>
+                        <span id="compare-badge" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-700">OFF</span>
                     </button>
 
-                    <!-- Compare Site B Selector (shown when Compare is ON) -->
-                    <div id="compare-sidebar-box" class="hidden pt-2 space-y-1.5">
-                        <label for="select-compare-b" class="block text-[11px] font-mono text-amber-400">Site B (Compare Target)</label>
+                    <!-- Site B Selector (Visible when Compare is ON) -->
+                    <div id="compare-site-b-panel" class="hidden pt-2 space-y-2 border-t border-slate-800/80">
+                        <label for="select-landing-site-b" class="block text-[11px] font-mono text-amber-300 font-semibold">
+                            Site B (2nd Cursor)
+                        </label>
                         <div class="relative">
-                            <select id="select-compare-b"
-                                class="w-full appearance-none pl-3 pr-8 py-2 rounded-xl bg-slate-950 border border-amber-500/50 focus:border-amber-400 text-xs font-mono text-slate-200 focus:outline-none cursor-pointer">
+                            <select id="select-landing-site-b"
+                                class="w-full appearance-none pl-3 pr-8 py-2 rounded-xl bg-slate-950 border border-amber-500/40 focus:border-amber-400 text-xs font-mono text-slate-200 focus:outline-none cursor-pointer">
                                 <option value="1" data-lat="-43.3100" data-lon="-11.3600">Tycho Crater (-43.31°, -11.36°)</option>
                                 <option value="2" data-lat="9.6200" data-lon="-20.0800" selected>Copernicus Crater (9.62°, -20.08°)</option>
                                 <option value="3" data-lat="24.5000" data-lon="-49.0000">Aristarchus & Vallis Schroteri (24.50°, -49.00°)</option>
@@ -293,7 +298,7 @@
                                 <option value="11" data-lat="-89.4500" data-lon="-137.3100">Polo sud - Cresta di Shackleton (-89.45°, -137.31°)</option>
                                 <option value="12" data-lat="-85.9900" data-lon="-2.9300">Polo sud - Massiccio Malapert (-85.99°, -2.93°)</option>
                             </select>
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-amber-400">
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
                                 </svg>
@@ -346,39 +351,26 @@
             </div>
 
             <!-- =========================================================
-                 VIEW 1: 3D MOON GLOBE (1 or 2 Cursors when Compare is active)
+                 VIEW 1: 3D MOON GLOBE (Fitted to viewport, 1 or 2 cursors)
             ========================================================== -->
-            <section id="view-moon" class="flex-1 p-4 lg:p-8 flex flex-col gap-6">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div>
-                        <span class="text-xs font-mono uppercase tracking-wider text-indigo-400">View 01 / 03</span>
-                        <h2 class="text-xl sm:text-2xl font-bold text-white">Moon Surface & Coordinates</h2>
-                    </div>
-                    <div class="flex items-center gap-2 self-start">
-                        <span id="badge-compare-cursors" class="hidden text-xs font-mono text-amber-300 bg-amber-950/60 border border-amber-500/40 px-3 py-1.5 rounded-lg">
-                            Compare Active: 2 Cursors on Globe
-                        </span>
-                        <span class="text-xs font-mono text-slate-400 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg">
-                            Interactive 3D Globe
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Moon Interactive 3D Viewport Container -->
-                <div id="moon-canvas-container" class="flex-1 min-h-[430px] rounded-2xl border border-slate-800 bg-slate-950 relative overflow-hidden shadow-2xl">
-                    <!-- Top-Left Viewport Label -->
+            <section id="view-moon" class="flex-1 p-3 lg:p-5 flex flex-col gap-3 overflow-hidden">
+                <!-- Moon Interactive 3D Viewport Container fitted to screen -->
+                <div id="moon-canvas-container" class="w-full h-[calc(100vh-12.5rem)] min-h-[360px] rounded-2xl border border-slate-800 bg-slate-950 relative overflow-hidden shadow-2xl">
+                    <!-- Top-Left Viewport Label & Cursor Legend -->
                     <div class="absolute top-3.5 left-3.5 z-10 flex flex-wrap items-center gap-2 pointer-events-none">
                         <span class="text-[11px] font-mono text-slate-300 bg-slate-900/85 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-700/80 shadow">
                             3D_LUNAR_GLOBE // WEBGL
                         </span>
                         <span id="hud-zoom-readout" class="text-[11px] font-mono text-indigo-300 bg-slate-900/85 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-700/80 shadow">
-                            DIST: 3.20 R☾
+                            DIST: 3.60 R☾
                         </span>
-                        <span class="text-[11px] font-mono text-emerald-300 bg-slate-900/85 backdrop-blur-md px-2.5 py-1 rounded-lg border border-emerald-500/40 shadow">
-                            ● Site A
+                        <span class="text-[11px] font-mono text-emerald-300 bg-slate-900/85 backdrop-blur-md px-2.5 py-1 rounded-lg border border-emerald-500/40 shadow flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                            <span id="hud-cursor-a-label">Site A</span>
                         </span>
-                        <span id="hud-cursor-b-legend" class="hidden text-[11px] font-mono text-amber-300 bg-slate-900/85 backdrop-blur-md px-2.5 py-1 rounded-lg border border-amber-500/40 shadow">
-                            ● Site B
+                        <span id="hud-cursor-b-badge" class="hidden text-[11px] font-mono text-amber-300 bg-slate-900/85 backdrop-blur-md px-2.5 py-1 rounded-lg border border-amber-500/40 shadow flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                            <span id="hud-cursor-b-label">Site B</span>
                         </span>
                     </div>
 
@@ -401,154 +393,133 @@
                     <!-- Bottom Floating Navigation Hints HUD -->
                     <div class="absolute bottom-3.5 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
                         <div class="px-3.5 py-1.5 rounded-full bg-slate-900/85 backdrop-blur-md border border-slate-700/80 text-[11px] font-mono text-slate-300 whitespace-nowrap shadow-lg">
-                            Drag to rotate • Scroll to zoom • Click "Visit Site" for 3D Terrain
+                            Drag to rotate • Scroll to zoom • Right-drag to pan
                         </div>
                     </div>
                 </div>
             </section>
 
             <!-- =========================================================
-                 VIEW 2: 3D TERRAIN VISUALIZER (lunar.py) — Single or Side-by-Side
+                 VIEW 2: 3D TERRAIN VISUALIZER (lunar.py) - Single or Side-by-Side
             ========================================================== -->
-            <section id="view-terrain" class="hidden flex-1 p-4 lg:p-8 flex flex-col gap-6">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <section id="view-dem" class="hidden flex-1 p-4 lg:p-6 flex flex-col gap-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
-                        <span class="text-xs font-mono uppercase tracking-wider text-emerald-400">View 02 / 03 — lunar.py</span>
-                        <h2 class="text-xl sm:text-2xl font-bold text-white">3D Local Terrain & Solar Illumination</h2>
+                        <span class="text-xs font-mono uppercase tracking-wider text-emerald-400">Window 02 / 03 — lunar.py</span>
+                        <h2 class="text-lg sm:text-xl font-bold text-white">3D Lunar Terrain & Shadow Visualizer</h2>
                     </div>
-                    <button id="btn-back-to-moon" type="button"
-                        class="px-3 py-1.5 rounded-lg text-xs font-mono bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all self-start">
-                        ← Back to Moon Globe
-                    </button>
+                    <span id="dem-mode-label" class="text-xs font-mono text-slate-400 bg-slate-900 border border-slate-800 px-3 py-1 rounded-lg self-start">
+                        Single Site Mode
+                    </span>
                 </div>
 
-                <!-- Terrain Grid: 1 column normally, 2 columns side-by-side when Compare is active -->
-                <div id="terrain-grid" class="grid grid-cols-1 gap-6 flex-1">
-                    <!-- SITE A 3D TERRAIN PANEL -->
-                    <div class="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 flex flex-col gap-4">
-                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                <!-- Grid: 1 column normally, 2 columns side-by-side when Compare is active -->
+                <div id="dem-grid" class="grid grid-cols-1 gap-5 flex-1">
+                    <!-- SITE A 3D DEM PANEL -->
+                    <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 flex flex-col gap-3">
+                        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
                             <div>
-                                <span class="text-[11px] font-mono font-bold uppercase tracking-wider text-emerald-400 block">Site A</span>
-                                <h3 id="terrain-a-title" class="text-sm sm:text-base font-bold text-white">Tycho Crater (-43.31°, -11.36°)</h3>
+                                <span class="text-[10px] font-mono uppercase tracking-wider text-emerald-400 block">Site A</span>
+                                <h3 id="dem-a-title" class="text-sm font-mono font-bold text-white">Tycho Crater (-43.31°, -11.36°)</h3>
                             </div>
-                            <button id="btn-explore-a" type="button"
-                                class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-mono font-bold shadow-lg shadow-amber-500/20 transition-all flex items-center gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                </svg>
-                                <span>Explore</span>
-                            </button>
-                        </div>
-
-                        <!-- Site A Telemetry -->
-                        <div class="grid grid-cols-3 gap-2 text-xs font-mono">
-                            <div class="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
-                                <span class="text-[10px] text-slate-500 block">ELEVATION</span>
-                                <span id="terrain-a-elev" class="text-indigo-300 font-semibold">-- m</span>
-                            </div>
-                            <div class="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
-                                <span class="text-[10px] text-slate-500 block">ILLUMINATION</span>
-                                <span id="terrain-a-illum" class="text-emerald-300 font-semibold">-- %</span>
-                            </div>
-                            <div class="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
-                                <span class="text-[10px] text-slate-500 block">RELIEF</span>
-                                <span id="terrain-a-relief" class="text-slate-200 font-semibold">-- km</span>
+                            <div class="flex items-center gap-3">
+                                <div class="text-right font-mono text-[11px]">
+                                    <span id="dem-a-elev" class="text-indigo-300 block">Elev: -- m</span>
+                                    <span id="dem-a-illum" class="text-emerald-300 block">Illum: -- %</span>
+                                </div>
+                                <button id="btn-explore-a" type="button"
+                                    class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold font-mono shadow-lg shadow-amber-500/20 transition-all flex items-center gap-1.5">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                    <span>Explore</span>
+                                </button>
                             </div>
                         </div>
 
-                        <!-- Site A 3D DEM Plotly Container -->
-                        <div class="flex-1 min-h-[420px] rounded-xl border border-slate-800 bg-slate-950 relative overflow-hidden">
-                            <div id="terrain-a-loading" class="hidden absolute inset-0 z-10 bg-slate-950/85 backdrop-blur-sm flex flex-col items-center justify-center gap-2">
-                                <div class="w-7 h-7 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-                                <span class="text-xs font-mono text-emerald-300">Running lunar.py 3D DEM...</span>
+                        <div class="flex-1 min-h-[430px] rounded-xl overflow-hidden bg-slate-950 border border-slate-800 relative">
+                            <div id="dem-a-loading" class="hidden absolute inset-0 z-10 bg-slate-950/85 backdrop-blur-sm flex flex-col items-center justify-center gap-2">
+                                <div class="w-7 h-7 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                                <span class="text-xs font-mono text-indigo-300">Computing USGS LOLA 3D DEM...</span>
                             </div>
-                            <div id="terrain-a-plotly" class="w-full h-full min-h-[420px]"></div>
+                            <div id="dem3d-a-plotly" class="w-full h-full min-h-[430px]"></div>
                         </div>
                     </div>
 
-                    <!-- SITE B 3D TERRAIN PANEL (Shown side-by-side when Compare is active) -->
-                    <div id="terrain-b-panel" class="hidden rounded-2xl border border-slate-800 bg-slate-900/50 p-4 flex flex-col gap-4">
-                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                    <!-- SITE B 3D DEM PANEL (Shown side-by-side when Compare is active) -->
+                    <div id="dem-b-panel" class="hidden rounded-2xl border border-slate-800 bg-slate-900/60 p-4 flex flex-col gap-3">
+                        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
                             <div>
-                                <span class="text-[11px] font-mono font-bold uppercase tracking-wider text-amber-400 block">Site B</span>
-                                <h3 id="terrain-b-title" class="text-sm sm:text-base font-bold text-white">Copernicus Crater (9.62°, -20.08°)</h3>
+                                <span class="text-[10px] font-mono uppercase tracking-wider text-amber-400 block">Site B</span>
+                                <h3 id="dem-b-title" class="text-sm font-mono font-bold text-white">Copernicus Crater (9.62°, -20.08°)</h3>
                             </div>
-                            <button id="btn-explore-b" type="button"
-                                class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-mono font-bold shadow-lg shadow-amber-500/20 transition-all flex items-center gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                </svg>
-                                <span>Explore</span>
-                            </button>
-                        </div>
-
-                        <!-- Site B Telemetry -->
-                        <div class="grid grid-cols-3 gap-2 text-xs font-mono">
-                            <div class="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
-                                <span class="text-[10px] text-slate-500 block">ELEVATION</span>
-                                <span id="terrain-b-elev" class="text-indigo-300 font-semibold">-- m</span>
-                            </div>
-                            <div class="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
-                                <span class="text-[10px] text-slate-500 block">ILLUMINATION</span>
-                                <span id="terrain-b-illum" class="text-emerald-300 font-semibold">-- %</span>
-                            </div>
-                            <div class="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
-                                <span class="text-[10px] text-slate-500 block">RELIEF</span>
-                                <span id="terrain-b-relief" class="text-slate-200 font-semibold">-- km</span>
+                            <div class="flex items-center gap-3">
+                                <div class="text-right font-mono text-[11px]">
+                                    <span id="dem-b-elev" class="text-indigo-300 block">Elev: -- m</span>
+                                    <span id="dem-b-illum" class="text-emerald-300 block">Illum: -- %</span>
+                                </div>
+                                <button id="btn-explore-b" type="button"
+                                    class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold font-mono shadow-lg shadow-amber-500/20 transition-all flex items-center gap-1.5">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                    <span>Explore</span>
+                                </button>
                             </div>
                         </div>
 
-                        <!-- Site B 3D DEM Plotly Container -->
-                        <div class="flex-1 min-h-[420px] rounded-xl border border-slate-800 bg-slate-950 relative overflow-hidden">
-                            <div id="terrain-b-loading" class="hidden absolute inset-0 z-10 bg-slate-950/85 backdrop-blur-sm flex flex-col items-center justify-center gap-2">
+                        <div class="flex-1 min-h-[430px] rounded-xl overflow-hidden bg-slate-950 border border-slate-800 relative">
+                            <div id="dem-b-loading" class="hidden absolute inset-0 z-10 bg-slate-950/85 backdrop-blur-sm flex flex-col items-center justify-center gap-2">
                                 <div class="w-7 h-7 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
-                                <span class="text-xs font-mono text-amber-300">Running lunar.py 3D DEM...</span>
+                                <span class="text-xs font-mono text-amber-300">Computing USGS LOLA 3D DEM...</span>
                             </div>
-                            <div id="terrain-b-plotly" class="w-full h-full min-h-[420px]"></div>
+                            <div id="dem3d-b-plotly" class="w-full h-full min-h-[430px]"></div>
                         </div>
                     </div>
                 </div>
             </section>
 
             <!-- =========================================================
-                 VIEW 3: FIRST-PERSON LUNAR SURFACE EXPLORATION (Full Screen)
+                 VIEW 3: FIRST-PERSON LUNAR SURFACE VIEW (Full Screen)
             ========================================================== -->
-            <section id="view-fpv" class="hidden fixed inset-0 z-50 bg-slate-950 flex flex-col">
-                <div id="fpv-canvas-container" class="flex-1 w-full h-full relative overflow-hidden">
-                    <!-- Top-Left Site HUD -->
-                    <div class="absolute top-4 left-4 z-10 flex flex-col gap-1.5 bg-slate-900/85 backdrop-blur-md px-3.5 py-2.5 rounded-xl border border-slate-700/80 shadow-lg pointer-events-none">
-                        <span class="text-[10px] font-mono uppercase tracking-wider text-amber-400">View 03 / 03 — First-Person Surface Exploration</span>
-                        <h3 id="fpv-site-title" class="text-sm sm:text-base font-bold text-white">Tycho Crater (-43.31°, -11.36°)</h3>
-                        <div class="flex items-center gap-4 text-[11px] font-mono text-slate-300">
-                            <span id="fpv-heading-readout">HDG: 000° (N)</span>
-                            <span id="fpv-pitch-readout">PITCH: +05°</span>
-                            <span id="fpv-sun-readout" class="text-amber-300">SUN: --° / --°</span>
-                            <span id="fpv-earth-readout" class="text-sky-300">EARTH: --° / --°</span>
-                        </div>
+            <section id="view-surface" class="hidden fixed inset-0 z-50 bg-slate-950 flex flex-col">
+                <!-- Top Overlay Bar -->
+                <div class="h-14 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 lg:px-6 flex items-center justify-between gap-4 shrink-0">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-mono uppercase tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2.5 py-1 rounded">
+                            1st Person Surface View
+                        </span>
+                        <h2 id="surface-site-title" class="text-sm sm:text-base font-bold font-mono text-white truncate">
+                            Tycho Crater (-43.31°, -11.36°)
+                        </h2>
                     </div>
 
-                    <!-- Top-Right Exit Full-Screen Button -->
-                    <div class="absolute top-4 right-4 z-10 flex items-center gap-2">
-                        <button id="btn-exit-fpv" type="button"
-                            class="px-4 py-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-white text-xs font-mono font-semibold border border-slate-700 backdrop-blur-md shadow-lg transition-all flex items-center gap-2">
-                            <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <div class="flex items-center gap-4">
+                        <div class="hidden md:flex items-center gap-4 text-xs font-mono">
+                            <span id="surface-sun-info" class="text-amber-300">Sun: --.-° / --.-°</span>
+                            <span id="surface-earth-info" class="text-sky-300">Earth: --.-° / --.-°</span>
+                        </div>
+                        <button id="btn-exit-surface" type="button"
+                            class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white border border-slate-600 text-xs font-mono font-semibold transition-all flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
                             </svg>
-                            <span>Exit Surface View</span>
+                            <span>Exit Fullscreen</span>
                         </button>
                     </div>
+                </div>
 
-                    <!-- Bottom Controls Hint -->
-                    <div class="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
-                        <div class="px-4 py-1.5 rounded-full bg-slate-900/85 backdrop-blur-md border border-slate-700/80 text-[11px] font-mono text-slate-300 whitespace-nowrap shadow-lg">
-                            Drag mouse to look around 360° • WASD / Arrow keys to walk across lunar regolith
-                        </div>
+                <!-- Full-Screen 360° Horizon / First-Person Viewport -->
+                <div class="flex-1 relative bg-slate-950 overflow-hidden">
+                    <div id="surface-loading" class="hidden absolute inset-0 z-20 bg-slate-950/85 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
+                        <div class="w-8 h-8 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+                        <p class="text-xs font-mono text-amber-300">Rendering First-Person Lunar Surface & Sky...</p>
                     </div>
+                    <div id="surface-plotly-container" class="w-full h-full"></div>
                 </div>
             </section>
-
         </main>
     </div>
 
@@ -562,16 +533,12 @@
         document.addEventListener('DOMContentLoaded', () => {
             // View & Tab references
             const viewMoon = document.getElementById('view-moon');
-            const viewTerrain = document.getElementById('view-terrain');
-            const viewFpv = document.getElementById('view-fpv');
-
+            const viewHorizon = document.getElementById('view-horizon');
             const tabMoon = document.getElementById('tab-moon');
-            const tabTerrain = document.getElementById('tab-terrain');
-            const tabFpv = document.getElementById('tab-fpv');
+            const tabHorizon = document.getElementById('tab-horizon');
 
             // Input & Telemetry references
             const selectLandingSite = document.getElementById('select-landing-site');
-            const selectCompareB = document.getElementById('select-compare-b');
             const inputLat = document.getElementById('input-lat');
             const inputLon = document.getElementById('input-lon');
             const inputDate = document.getElementById('input-date');
@@ -583,21 +550,8 @@
             const displayTime = document.getElementById('display-time');
             const statusToast = document.getElementById('status-toast');
 
-            // Compare State
-            let isCompareActive = false;
-            const btnCompare = document.getElementById('btn-compare');
-            const btnCompareLabel = document.getElementById('btn-compare-label');
-            const compareSidebarBox = document.getElementById('compare-sidebar-box');
-            const badgeCompareCursors = document.getElementById('badge-compare-cursors');
-            const hudCursorBLegend = document.getElementById('hud-cursor-b-legend');
-            const terrainGrid = document.getElementById('terrain-grid');
-            const terrainBPanel = document.getElementById('terrain-b-panel');
-
-            // Store simulation data for Site A and Site B
-            const siteDataCache = { a: null, b: null };
-
             // -------------------------------------------------------------
-            // VIEW 1: 3D MOON GLOBE (WITH 1 OR 2 CURSORS)
+            // 3D MOON SCENE INITIALIZATION (Pre-made Texture, Flat Lit)
             // -------------------------------------------------------------
             const canvasContainer = document.getElementById('moon-canvas-container');
             const hudZoomReadout = document.getElementById('hud-zoom-readout');
@@ -608,6 +562,7 @@
             const MOON_RADIUS = 1.0;
             const DEFAULT_CAM_DIST = 3.2;
 
+            // Scene & Starfield Background
             const scene = new THREE.Scene();
             scene.background = new THREE.Color(0x030712);
 
@@ -618,6 +573,7 @@
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             canvasContainer.appendChild(renderer.domElement);
 
+            // OrbitControls: Left-drag orbit, scroll zoom, right-drag pan, touch gestures
             const controls = new OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.dampingFactor = 0.06;
@@ -629,17 +585,19 @@
             controls.autoRotate = false;
             controls.autoRotateSpeed = 0.6;
 
-            function createStarfield(count = 1800, minR = 28, spanR = 35, size = 0.14) {
-                const positions = new Float32Array(count * 3);
-                const colors = new Float32Array(count * 3);
+            // Procedural Starfield
+            function createStarfield() {
+                const starCount = 1800;
+                const positions = new Float32Array(starCount * 3);
+                const colors = new Float32Array(starCount * 3);
                 let seed = 4219;
                 const rand = () => {
                     seed = (seed * 16807) % 2147483647;
                     return (seed - 1) / 2147483646;
                 };
 
-                for (let i = 0; i < count; i++) {
-                    const r = minR + rand() * spanR;
+                for (let i = 0; i < starCount; i++) {
+                    const r = 28 + rand() * 35;
                     const theta = rand() * Math.PI * 2;
                     const phi = Math.acos(2 * rand() - 1);
                     positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
@@ -657,7 +615,7 @@
                 geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
                 const mat = new THREE.PointsMaterial({
-                    size,
+                    size: 0.14,
                     vertexColors: true,
                     transparent: true,
                     opacity: 0.85
@@ -666,6 +624,7 @@
             }
             scene.add(createStarfield());
 
+            // Lightweight offline fallback texture if external CDN texture fails
             function createFallbackLunarTexture() {
                 const canvas = document.createElement('canvas');
                 canvas.width = 512;
@@ -692,10 +651,15 @@
                 return tex;
             }
 
+            // Moon Sphere Mesh with MeshBasicMaterial (100% uniform illumination, zero shadows)
             const moonGroup = new THREE.Group();
             scene.add(moonGroup);
 
-            const moonMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            const moonGeometry = new THREE.SphereGeometry(MOON_RADIUS, 96, 96);
+            const moonMaterial = new THREE.MeshBasicMaterial({
+                color: 0xffffff
+            });
+
             const textureLoader = new THREE.TextureLoader();
             textureLoader.setCrossOrigin('anonymous');
             const MOON_TEXTURE_URL = 'https://raw.githubusercontent.com/mrdoob/three.js/r160/examples/textures/planets/moon_1024.jpg';
@@ -714,51 +678,61 @@
                 }
             );
 
-            const moonMesh = new THREE.Mesh(new THREE.SphereGeometry(MOON_RADIUS, 96, 96), moonMaterial);
+            const moonMesh = new THREE.Mesh(moonGeometry, moonMaterial);
+            // Align prime meridian (0° longitude) of standard equirectangular Moon map with +Z axis
             moonMesh.rotation.y = -Math.PI / 2;
             moonGroup.add(moonMesh);
 
-            const lunarGridLines = new THREE.LineSegments(
-                new THREE.WireframeGeometry(new THREE.SphereGeometry(MOON_RADIUS * 1.002, 36, 18)),
-                new THREE.LineBasicMaterial({ color: 0x6366f1, transparent: true, opacity: 0.08 })
-            );
+            // Subtle Prime Meridian & Equator Reference Grid (faint technical overlay)
+            const gridSphereGeo = new THREE.SphereGeometry(MOON_RADIUS * 1.002, 36, 18);
+            const gridWireframe = new THREE.WireframeGeometry(gridSphereGeo);
+            const gridMat = new THREE.LineBasicMaterial({
+                color: 0x6366f1,
+                transparent: true,
+                opacity: 0.08
+            });
+            const lunarGridLines = new THREE.LineSegments(gridWireframe, gridMat);
             moonGroup.add(lunarGridLines);
 
-            // Helper to build a 3D Surface Pin Cursor
-            function createSurfaceCursor(ringHex, pulseHex, headHex) {
-                const group = new THREE.Group();
+            // 3D Surface Coordinate Marker Pin & Pulse Ring
+            const markerGroup = new THREE.Group();
+            moonGroup.add(markerGroup);
 
-                const ring = new THREE.Mesh(
-                    new THREE.RingGeometry(0.026, 0.038, 32),
-                    new THREE.MeshBasicMaterial({ color: ringHex, side: THREE.DoubleSide, transparent: true, opacity: 0.95 })
-                );
-                group.add(ring);
+            const ringGeo = new THREE.RingGeometry(0.026, 0.038, 32);
+            const ringMat = new THREE.MeshBasicMaterial({
+                color: 0x34d399,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.95
+            });
+            const markerRing = new THREE.Mesh(ringGeo, ringMat);
+            markerGroup.add(markerRing);
 
-                const pulseMat = new THREE.MeshBasicMaterial({ color: pulseHex, side: THREE.DoubleSide, transparent: true, opacity: 0.65 });
-                const pulseRing = new THREE.Mesh(new THREE.RingGeometry(0.042, 0.052, 32), pulseMat);
-                group.add(pulseRing);
+            const pulseRingGeo = new THREE.RingGeometry(0.042, 0.052, 32);
+            const pulseRingMat = new THREE.MeshBasicMaterial({
+                color: 0x6366f1,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.65
+            });
+            const markerPulseRing = new THREE.Mesh(pulseRingGeo, pulseRingMat);
+            markerGroup.add(markerPulseRing);
 
-                const stemGeo = new THREE.CylinderGeometry(0.004, 0.004, 0.085, 12);
-                stemGeo.rotateX(Math.PI / 2);
-                stemGeo.translate(0, 0, 0.042);
-                group.add(new THREE.Mesh(stemGeo, new THREE.MeshBasicMaterial({ color: ringHex })));
+            const pinStemGeo = new THREE.CylinderGeometry(0.004, 0.004, 0.08, 12);
+            pinStemGeo.rotateX(Math.PI / 2);
+            pinStemGeo.translate(0, 0, 0.04);
+            const pinStemMat = new THREE.MeshBasicMaterial({ color: 0x34d399 });
+            const pinStem = new THREE.Mesh(pinStemGeo, pinStemMat);
+            markerGroup.add(pinStem);
 
-                const headGeo = new THREE.SphereGeometry(0.014, 16, 16);
-                headGeo.translate(0, 0, 0.09);
-                group.add(new THREE.Mesh(headGeo, new THREE.MeshBasicMaterial({ color: headHex })));
+            const pinHeadGeo = new THREE.SphereGeometry(0.013, 16, 16);
+            pinHeadGeo.translate(0, 0, 0.085);
+            const pinHeadMat = new THREE.MeshBasicMaterial({ color: 0x6ee7b7 });
+            const pinHead = new THREE.Mesh(pinHeadGeo, pinHeadMat);
+            markerGroup.add(pinHead);
 
-                return { group, pulseRing, pulseMat };
-            }
-
-            // Cursor A (Primary Site - Emerald)
-            const cursorA = createSurfaceCursor(0x34d399, 0x6366f1, 0x6ee7b7);
-            moonGroup.add(cursorA.group);
-
-            // Cursor B (Compare Site - Amber, visible only when Compare is active)
-            const cursorB = createSurfaceCursor(0xf59e0b, 0xfbbf24, 0xfde68a);
-            cursorB.group.visible = false;
-            moonGroup.add(cursorB.group);
-
+            // Convert Selenographic Latitude & Longitude (degrees) to 3D Cartesian vector
+            // Aligned so Lat=0°, Lon=0° faces +Z (front center of the Moon's nearside)
             function latLonToVector3(latDeg, lonDeg, radius = MOON_RADIUS) {
                 const lat = THREE.MathUtils.degToRad(latDeg);
                 const lon = THREE.MathUtils.degToRad(lonDeg);
@@ -768,12 +742,14 @@
                 return new THREE.Vector3(x, y, z);
             }
 
-            function updateCursorPosition(cursorObj, latDeg, lonDeg) {
+            // Update 3D Marker Position on the Moon surface
+            function updateSurfaceMarker(latDeg, lonDeg) {
                 const surfacePos = latLonToVector3(latDeg, lonDeg, MOON_RADIUS * 1.004);
-                cursorObj.group.position.copy(surfacePos);
-                cursorObj.group.lookAt(surfacePos.clone().multiplyScalar(2));
+                markerGroup.position.copy(surfacePos);
+                markerGroup.lookAt(surfacePos.clone().multiplyScalar(2));
             }
 
+            // Smooth Camera Transition State toward selected coordinate
             let cameraTransition = null;
 
             function focusCameraOnCoordinates(latDeg, lonDeg) {
@@ -790,6 +766,7 @@
                 };
             }
 
+            // Responsive Resize Handling via ResizeObserver
             function resizeMoonRenderer() {
                 const rect = canvasContainer.getBoundingClientRect();
                 if (rect.width > 0 && rect.height > 0) {
@@ -799,9 +776,13 @@
                 }
             }
 
-            new ResizeObserver(() => resizeMoonRenderer()).observe(canvasContainer);
+            const resizeObserver = new ResizeObserver(() => {
+                resizeMoonRenderer();
+            });
+            resizeObserver.observe(canvasContainer);
             resizeMoonRenderer();
 
+            // HUD Controls: Auto-Rotate & Reset Camera
             btnAutoRotate.addEventListener('click', () => {
                 controls.autoRotate = !controls.autoRotate;
                 if (controls.autoRotate) {
@@ -825,139 +806,214 @@
                 };
             });
 
+            // Cancel smooth transition if user grabs the globe manually
             controls.addEventListener('start', () => {
                 cameraTransition = null;
             });
 
+            // Animation Loop
             const clock = new THREE.Clock();
             function animate() {
                 requestAnimationFrame(animate);
-                if (viewMoon.classList.contains('hidden')) return;
-
                 const elapsed = clock.getElapsedTime();
+
+                // Animate marker pulse ring
                 const pulseScale = 1 + 0.25 * Math.sin(elapsed * 3.2);
-                const pulseOp = 0.45 + 0.3 * Math.cos(elapsed * 3.2);
+                markerPulseRing.scale.set(pulseScale, pulseScale, 1);
+                pulseRingMat.opacity = 0.45 + 0.3 * Math.cos(elapsed * 3.2);
 
-                cursorA.pulseRing.scale.set(pulseScale, pulseScale, 1);
-                cursorA.pulseMat.opacity = pulseOp;
-
-                if (cursorB.group.visible) {
-                    cursorB.pulseRing.scale.set(pulseScale, pulseScale, 1);
-                    cursorB.pulseMat.opacity = pulseOp;
-                }
-
+                // Smooth camera focus interpolation
                 if (cameraTransition) {
                     cameraTransition.progress = Math.min(1, cameraTransition.progress + 0.035);
                     const ease = 1 - Math.pow(1 - cameraTransition.progress, 3);
                     camera.position.lerpVectors(cameraTransition.startPos, cameraTransition.endPos, ease);
                     controls.target.lerpVectors(cameraTransition.startTarget, cameraTransition.endTarget, ease);
-                    if (cameraTransition.progress >= 1) cameraTransition = null;
+                    if (cameraTransition.progress >= 1) {
+                        cameraTransition = null;
+                    }
                 }
 
                 controls.update();
+
+                // Update live zoom/distance readout in HUD
                 const camDist = camera.position.distanceTo(controls.target);
                 hudZoomReadout.textContent = `DIST: ${camDist.toFixed(2)} R☾`;
+
                 renderer.render(scene, camera);
             }
             animate();
 
+            // Second Cursor (Site B) on the SAME 3D Moon when Compare is active
+            const markerGroupB = new THREE.Group();
+            markerGroupB.visible = false;
+            moonGroup.add(markerGroupB);
+
+            const ringGeoB = new THREE.RingGeometry(0.026, 0.038, 32);
+            const ringMatB = new THREE.MeshBasicMaterial({ color: 0xfbbf24, side: THREE.DoubleSide, transparent: true, opacity: 0.95 });
+            markerGroupB.add(new THREE.Mesh(ringGeoB, ringMatB));
+
+            const stemGeoB = new THREE.CylinderGeometry(0.004, 0.004, 0.08, 12);
+            stemGeoB.rotateX(Math.PI / 2);
+            stemGeoB.translate(0, 0, 0.04);
+            markerGroupB.add(new THREE.Mesh(stemGeoB, new THREE.MeshBasicMaterial({ color: 0xfbbf24 })));
+
+            const headGeoB = new THREE.SphereGeometry(0.013, 16, 16);
+            headGeoB.translate(0, 0, 0.085);
+            markerGroupB.add(new THREE.Mesh(headGeoB, new THREE.MeshBasicMaterial({ color: 0xfde68a })));
+
+            function updateSurfaceMarkerB(latDeg, lonDeg) {
+                const surfacePos = latLonToVector3(latDeg, lonDeg, MOON_RADIUS * 1.004);
+                markerGroupB.position.copy(surfacePos);
+                markerGroupB.lookAt(surfacePos.clone().multiplyScalar(2));
+            }
+
+            // Fit Moon neatly inside viewport on resize
+            function fitMoonToViewport() {
+                resizeMoonRenderer();
+                const rect = canvasContainer.getBoundingClientRect();
+                if (rect.width > 0 && rect.height > 0) {
+                    const aspect = rect.width / rect.height;
+                    const vFov = THREE.MathUtils.degToRad(camera.fov);
+                    const minDimFactor = aspect < 1 ? aspect : 1;
+                    const fitDist = (MOON_RADIUS * 1.32) / (Math.tan(vFov / 2) * minDimFactor);
+                    const clampedDist = THREE.MathUtils.clamp(fitDist, 3.1, 4.6);
+                    if (!cameraTransition) {
+                        const dir = camera.position.clone().normalize();
+                        if (dir.lengthSq() === 0) dir.set(0, 0.1, 1).normalize();
+                        camera.position.copy(dir.multiplyScalar(clampedDist));
+                        controls.update();
+                    }
+                }
+            }
+            window.addEventListener('resize', fitMoonToViewport);
+
             // -------------------------------------------------------------
-            // VIEW SWITCHING LOGIC (1: Moon Globe, 2: 3D Terrain, 3: Surface Explore)
+            // 1. Switch between the 3 Views (Moon 3D, 3D Terrain, Surface 1st Person)
             // -------------------------------------------------------------
-            function setActiveTabStyle(activeTab) {
-                [tabMoon, tabTerrain, tabFpv].forEach(t => {
-                    t.classList.remove('bg-indigo-600', 'text-white', 'shadow-sm', 'font-semibold');
-                    t.classList.add('text-slate-400', 'font-medium');
-                });
-                activeTab.classList.add('bg-indigo-600', 'text-white', 'shadow-sm', 'font-semibold');
-                activeTab.classList.remove('text-slate-400', 'font-medium');
+            const viewDem = document.getElementById('view-dem');
+            const viewSurface = document.getElementById('view-surface');
+            const tabDem = document.getElementById('tab-dem');
+            const tabSurface = document.getElementById('tab-surface');
+
+            const btnCompare = document.getElementById('btn-compare');
+            const compareBadge = document.getElementById('compare-badge');
+            const compareSiteBPanel = document.getElementById('compare-site-b-panel');
+            const selectLandingSiteB = document.getElementById('select-landing-site-b');
+            const hudCursorALabel = document.getElementById('hud-cursor-a-label');
+            const hudCursorBBadge = document.getElementById('hud-cursor-b-badge');
+            const hudCursorBLabel = document.getElementById('hud-cursor-b-label');
+
+            const demGrid = document.getElementById('dem-grid');
+            const demBPanel = document.getElementById('dem-b-panel');
+            const demModeLabel = document.getElementById('dem-mode-label');
+
+            let isCompareActive = false;
+            let currentView = 'moon';
+            let simDataA = null;
+            let simDataB = null;
+            let activeSurfaceSlot = 'a';
+
+            function setTabActive(tabEl, active) {
+                if (active) {
+                    tabEl.classList.add('bg-indigo-600', 'text-white', 'shadow-sm', 'font-semibold');
+                    tabEl.classList.remove('text-slate-400', 'font-medium');
+                } else {
+                    tabEl.classList.remove('bg-indigo-600', 'text-white', 'shadow-sm', 'font-semibold');
+                    tabEl.classList.add('text-slate-400', 'font-medium');
+                }
             }
 
             function switchView(targetView) {
+                currentView = targetView;
                 viewMoon.classList.add('hidden');
-                viewTerrain.classList.add('hidden');
-                viewFpv.classList.add('hidden');
+                viewDem.classList.add('hidden');
+                viewSurface.classList.add('hidden');
 
-                if (targetView === 'terrain') {
-                    viewTerrain.classList.remove('hidden');
-                    setActiveTabStyle(tabTerrain);
+                setTabActive(tabMoon, targetView === 'moon');
+                setTabActive(tabDem, targetView === 'dem');
+                setTabActive(tabSurface, targetView === 'surface');
+
+                if (targetView === 'moon') {
+                    viewMoon.classList.remove('hidden');
+                    fitMoonToViewport();
+                } else if (targetView === 'dem') {
+                    viewDem.classList.remove('hidden');
                     setTimeout(() => {
                         if (window.Plotly) {
-                            const pa = document.getElementById('terrain-a-plotly');
-                            const pb = document.getElementById('terrain-b-plotly');
+                            const pa = document.getElementById('dem3d-a-plotly');
+                            const pb = document.getElementById('dem3d-b-plotly');
                             if (pa && pa.data) Plotly.Plots.resize(pa);
                             if (pb && pb.data && isCompareActive) Plotly.Plots.resize(pb);
                         }
-                    }, 50);
-                } else if (targetView === 'fpv') {
-                    viewFpv.classList.remove('hidden');
-                    setActiveTabStyle(tabFpv);
-                    resizeFpvRenderer();
-                } else {
-                    viewMoon.classList.remove('hidden');
-                    setActiveTabStyle(tabMoon);
-                    resizeMoonRenderer();
+                    }, 60);
+                } else if (targetView === 'surface') {
+                    viewSurface.classList.remove('hidden');
+                    renderSurfaceView(activeSurfaceSlot);
                 }
             }
 
             tabMoon.addEventListener('click', () => switchView('moon'));
-            tabTerrain.addEventListener('click', () => {
-                switchView('terrain');
-                loadTerrainForSite('a');
-                if (isCompareActive) loadTerrainForSite('b');
+            tabDem.addEventListener('click', () => {
+                switchView('dem');
+                if (!simDataA) simulateSlot('a');
+                if (isCompareActive && !simDataB) simulateSlot('b');
             });
-            tabFpv.addEventListener('click', () => openSurfaceExplore('a'));
-            document.getElementById('btn-back-to-moon').addEventListener('click', () => switchView('moon'));
+            tabSurface.addEventListener('click', () => {
+                switchView('surface');
+            });
 
-            // -------------------------------------------------------------
-            // COMPARE MODE TOGGLE (2 Cursors on Globe / 2 Terrains Side-by-Side)
-            // -------------------------------------------------------------
+            document.getElementById('btn-exit-surface').addEventListener('click', () => {
+                switchView('dem');
+            });
+
+            // 2. Compare Toggle Logic (2 cursors on View 1, 2 side-by-side 3D DEMs on View 2)
             function updateCompareUI() {
-                cursorB.group.visible = isCompareActive;
-
                 if (isCompareActive) {
-                    btnCompare.classList.add('border-amber-500/70', 'text-amber-300', 'bg-amber-950/30');
-                    btnCompareLabel.textContent = 'Compare: ON';
-                    compareSidebarBox.classList.remove('hidden');
-                    badgeCompareCursors.classList.remove('hidden');
-                    hudCursorBLegend.classList.remove('hidden');
+                    compareBadge.textContent = 'ON';
+                    compareBadge.classList.remove('text-slate-400');
+                    compareBadge.classList.add('text-emerald-300', 'border-emerald-500/50');
+                    btnCompare.classList.add('border-emerald-500/70', 'bg-slate-800');
+                    compareSiteBPanel.classList.remove('hidden');
 
-                    terrainGrid.classList.remove('grid-cols-1');
-                    terrainGrid.classList.add('grid-cols-1', 'xl:grid-cols-2');
-                    terrainBPanel.classList.remove('hidden');
+                    // View 1: Show 2nd cursor on same 3D Moon
+                    markerGroupB.visible = true;
+                    hudCursorBBadge.classList.remove('hidden');
 
-                    syncCompareBPosition();
-                    if (!viewTerrain.classList.contains('hidden')) {
-                        loadTerrainForSite('b');
+                    // View 2: Side-by-side 2 columns
+                    demGrid.classList.remove('grid-cols-1');
+                    demGrid.classList.add('grid-cols-1', 'xl:grid-cols-2');
+                    demBPanel.classList.remove('hidden');
+                    demModeLabel.textContent = 'Side-by-Side Compare Mode';
+
+                    syncSiteB();
+                    if (currentView === 'dem' && !simDataB) {
+                        simulateSlot('b');
                     }
                 } else {
-                    btnCompare.classList.remove('border-amber-500/70', 'text-amber-300', 'bg-amber-950/30');
-                    btnCompareLabel.textContent = 'Compare: OFF';
-                    compareSidebarBox.classList.add('hidden');
-                    badgeCompareCursors.classList.add('hidden');
-                    hudCursorBLegend.classList.add('hidden');
+                    compareBadge.textContent = 'OFF';
+                    compareBadge.classList.add('text-slate-400');
+                    compareBadge.classList.remove('text-emerald-300', 'border-emerald-500/50');
+                    btnCompare.classList.remove('border-emerald-500/70');
+                    compareSiteBPanel.classList.add('hidden');
 
-                    terrainGrid.classList.remove('xl:grid-cols-2');
-                    terrainBPanel.classList.add('hidden');
+                    // View 1: Hide 2nd cursor
+                    markerGroupB.visible = false;
+                    hudCursorBBadge.classList.add('hidden');
+
+                    // View 2: Single column
+                    demGrid.classList.remove('xl:grid-cols-2');
+                    demBPanel.classList.add('hidden');
+                    demModeLabel.textContent = 'Single Site Mode';
                 }
 
                 setTimeout(() => {
-                    if (window.Plotly) {
-                        const pa = document.getElementById('terrain-a-plotly');
-                        const pb = document.getElementById('terrain-b-plotly');
+                    if (window.Plotly && currentView === 'dem') {
+                        const pa = document.getElementById('dem3d-a-plotly');
+                        const pb = document.getElementById('dem3d-b-plotly');
                         if (pa && pa.data) Plotly.Plots.resize(pa);
                         if (pb && pb.data && isCompareActive) Plotly.Plots.resize(pb);
                     }
                 }, 60);
-            }
-
-            function syncCompareBPosition() {
-                const optB = selectCompareB.options[selectCompareB.selectedIndex];
-                if (!optB) return;
-                const latB = parseFloat(optB.dataset.lat) || 0;
-                const lonB = parseFloat(optB.dataset.lon) || 0;
-                updateCursorPosition(cursorB, latB, lonB);
-                document.getElementById('terrain-b-title').textContent = optB.textContent.trim();
             }
 
             btnCompare.addEventListener('click', () => {
@@ -965,16 +1021,25 @@
                 updateCompareUI();
             });
 
-            selectCompareB.addEventListener('change', () => {
-                syncCompareBPosition();
-                if (isCompareActive && !viewTerrain.classList.contains('hidden')) {
-                    loadTerrainForSite('b');
+            function syncSiteB() {
+                const optB = selectLandingSiteB.options[selectLandingSiteB.selectedIndex];
+                if (!optB) return;
+                const latB = parseFloat(optB.dataset.lat) || 0;
+                const lonB = parseFloat(optB.dataset.lon) || 0;
+                const labelB = optB.textContent.trim();
+                hudCursorBLabel.textContent = `Site B: ${labelB.split('(')[0].trim()}`;
+                document.getElementById('dem-b-title').textContent = labelB;
+                updateSurfaceMarkerB(latB, lonB);
+            }
+
+            selectLandingSiteB.addEventListener('change', () => {
+                syncSiteB();
+                if (isCompareActive) {
+                    simulateSlot('b');
                 }
             });
 
-            // -------------------------------------------------------------
-            // PARAMETERS & TELEMETRY SYNC
-            // -------------------------------------------------------------
+            // 3. Date & Time helpers
             function setNowDateTime() {
                 const now = new Date();
                 const yyyy = now.getFullYear();
@@ -987,23 +1052,30 @@
                 inputTime.value = `${hh}:${min}`;
             }
 
+            // 4. Synchronize sidebar parameters with top telemetry bar & 3D marker A
             function syncTelemetry(showFeedback = false, focus3D = false) {
                 const latVal = parseFloat(inputLat.value);
                 const lonVal = parseFloat(inputLon.value);
                 const selectedOption = selectLandingSite.options[selectLandingSite.selectedIndex];
 
-                const siteLabel = selectedOption ? selectedOption.textContent.trim() : 'CUSTOM_COORDINATES';
+                const siteLabel = selectedOption
+                    ? selectedOption.textContent.trim()
+                    : 'Custom Coordinates';
 
                 displaySite.textContent = siteLabel;
                 displayLat.textContent = !isNaN(latVal) ? `${latVal.toFixed(4)}°` : '[LAT_PLACEHOLDER]';
                 displayLon.textContent = !isNaN(lonVal) ? `${lonVal.toFixed(4)}°` : '[LON_PLACEHOLDER]';
                 displayDate.textContent = inputDate.value || '--/--/----';
                 displayTime.textContent = inputTime.value || '--:--';
-                document.getElementById('terrain-a-title').textContent = siteLabel;
+
+                hudCursorALabel.textContent = `Site A: ${siteLabel.split('(')[0].trim()}`;
+                document.getElementById('dem-a-title').textContent = !isNaN(latVal) && !isNaN(lonVal)
+                    ? `${siteLabel.split('(')[0].trim()} (${latVal.toFixed(2)}°, ${lonVal.toFixed(2)}°)`
+                    : siteLabel;
 
                 const validLat = !isNaN(latVal) ? THREE.MathUtils.clamp(latVal, -90, 90) : 0;
                 const validLon = !isNaN(lonVal) ? THREE.MathUtils.clamp(lonVal, -180, 180) : 0;
-                updateCursorPosition(cursorA, validLat, validLon);
+                updateSurfaceMarker(validLat, validLon);
 
                 if (focus3D) {
                     focusCameraOnCoordinates(validLat, validLon);
@@ -1011,7 +1083,9 @@
 
                 if (showFeedback) {
                     statusToast.classList.remove('opacity-0');
-                    setTimeout(() => statusToast.classList.add('opacity-0'), 2000);
+                    setTimeout(() => {
+                        statusToast.classList.add('opacity-0');
+                    }, 2000);
                 }
             }
 
@@ -1024,9 +1098,6 @@
                     if (!isNaN(lon)) inputLon.value = lon.toFixed(4);
                 }
                 syncTelemetry(true, true);
-                if (!viewTerrain.classList.contains('hidden')) {
-                    loadTerrainForSite('a');
-                }
             });
 
             function markCustomCoordinates() {
@@ -1040,17 +1111,17 @@
                 syncTelemetry(true, false);
             });
 
-            // "Visit Site" switches directly to View 2 (3D Terrain lunar.py)
+            // Clicking "Visit Site" switches directly to View 2 (3D Terrain lunar.py) and computes!
             document.getElementById('btn-update').addEventListener('click', () => {
                 syncTelemetry(true, true);
-                switchView('terrain');
-                loadTerrainForSite('a');
+                switchView('dem');
+                simulateSlot('a');
                 if (isCompareActive) {
-                    loadTerrainForSite('b');
+                    simulateSlot('b');
                 }
             });
 
-            // Coordinate Step Controls
+            // 5. Coordinate step buttons
             let currentCoordStep = 0.1;
             const stepButtons = document.querySelectorAll('.coord-step-btn');
             const arrowButtons = document.querySelectorAll('.coord-arrow-btn');
@@ -1111,46 +1182,41 @@
             });
 
             // -------------------------------------------------------------
-            // VIEW 2: LOAD 3D TERRAIN FROM PYTHON BACKEND (/api/simulate)
+            // 6. BACKEND SIMULATION FOR VIEW 2 (3D DEM) & VIEW 3 (1ST PERSON SURFACE)
             // -------------------------------------------------------------
-            function getSiteParams(slotKey) {
-                if (slotKey === 'b') {
-                    const optB = selectCompareB.options[selectCompareB.selectedIndex];
+            function getSlotParams(slot) {
+                if (slot === 'b') {
+                    const optB = selectLandingSiteB.options[selectLandingSiteB.selectedIndex];
                     return {
-                        label: optB ? optB.textContent.trim() : 'Site B',
                         name: optB ? optB.textContent.split('(')[0].trim() : 'Site B',
+                        fullLabel: optB ? optB.textContent.trim() : 'Site B',
                         lat: parseFloat(optB.dataset.lat) || 0,
                         lon: parseFloat(optB.dataset.lon) || 0
                     };
                 }
+                const latVal = parseFloat(inputLat.value) || 0;
+                const lonVal = parseFloat(inputLon.value) || 0;
                 const optA = selectLandingSite.options[selectLandingSite.selectedIndex];
-                const latA = parseFloat(inputLat.value) || 0;
-                const lonA = parseFloat(inputLon.value) || 0;
-                const labelA = optA && optA.value !== 'custom'
-                    ? optA.textContent.trim()
-                    : `Custom (${latA.toFixed(2)}°, ${lonA.toFixed(2)}°)`;
+                const nameA = optA ? optA.textContent.split('(')[0].trim() : 'Custom Site';
                 return {
-                    label: labelA,
-                    name: optA ? optA.textContent.split('(')[0].trim() : 'Custom Site',
-                    lat: latA,
-                    lon: lonA
+                    name: nameA,
+                    fullLabel: `${nameA} (${latVal.toFixed(2)}°, ${lonVal.toFixed(2)}°)`,
+                    lat: latVal,
+                    lon: lonVal
                 };
             }
 
-            async function loadTerrainForSite(slotKey) {
-                const params = getSiteParams(slotKey);
+            async function simulateSlot(slot) {
+                const params = getSlotParams(slot);
                 const dateStr = inputDate.value;
                 const timeStr = inputTime.value || '12:00';
 
-                document.getElementById(`terrain-${slotKey}-title`).textContent = params.label;
-                const loadingEl = document.getElementById(`terrain-${slotKey}-loading`);
-                const plotEl = document.getElementById(`terrain-${slotKey}-plotly`);
-                const elevEl = document.getElementById(`terrain-${slotKey}-elev`);
-                const illumEl = document.getElementById(`terrain-${slotKey}-illum`);
-                const reliefEl = document.getElementById(`terrain-${slotKey}-relief`);
+                const loadingEl = document.getElementById(`dem-${slot}-loading`);
+                const plotEl = document.getElementById(`dem3d-${slot}-plotly`);
+                const elevEl = document.getElementById(`dem-${slot}-elev`);
+                const illumEl = document.getElementById(`dem-${slot}-illum`);
 
                 loadingEl.classList.remove('hidden');
-
                 try {
                     const response = await fetch('/api/simulate', {
                         method: 'POST',
@@ -1166,11 +1232,11 @@
                     const result = await response.json();
                     if (!response.ok || result.error) throw new Error(result.error || 'Simulation error');
 
-                    siteDataCache[slotKey] = { ...result, params };
+                    if (slot === 'a') simDataA = result;
+                    else simDataB = result;
 
-                    elevEl.textContent = `${result.quota0_m.toFixed(1)} m`;
-                    illumEl.textContent = `${result.illuminated_pct.toFixed(1)} %`;
-                    reliefEl.textContent = `${result.relief_km.toFixed(2)} km`;
+                    elevEl.textContent = `Elev: ${result.quota0_m.toFixed(1)} m`;
+                    illumEl.textContent = `Illum: ${result.illuminated_pct.toFixed(1)} %`;
 
                     if (result.terrain_fig) {
                         Plotly.react(
@@ -1180,211 +1246,71 @@
                             { displaylogo: false, responsive: true }
                         );
                     }
+
+                    if (currentView === 'surface' && activeSurfaceSlot === slot) {
+                        renderSurfaceView(slot);
+                    }
                 } catch (err) {
-                    siteDataCache[slotKey] = { params, fallback: true };
-                    elevEl.textContent = 'Offline';
-                    illumEl.textContent = '-- %';
-                    reliefEl.textContent = '-- km';
-                    plotEl.innerHTML = `<div class="p-6 text-xs font-mono text-rose-400">Backend lunar.py non connesso (${err.message}). Puoi comunque cliccare "Explore" per la vista in prima persona.</div>`;
+                    plotEl.innerHTML = `<div class="p-6 text-xs font-mono text-rose-400">Error: ${err.message}</div>`;
                 } finally {
                     loadingEl.classList.add('hidden');
                 }
             }
 
-            // -------------------------------------------------------------
-            // VIEW 3: FIRST-PERSON LUNAR SURFACE EXPLORATION (FULL SCREEN)
-            // -------------------------------------------------------------
-            const fpvContainer = document.getElementById('fpv-canvas-container');
-            const fpvScene = new THREE.Scene();
-            fpvScene.background = new THREE.Color(0x01030a);
-            fpvScene.add(createStarfield(2500, 120, 80, 0.35));
+            // Render View 3: Full-Screen First-Person Surface & Sky View
+            async function renderSurfaceView(slot) {
+                activeSurfaceSlot = slot;
+                const params = getSlotParams(slot);
+                document.getElementById('surface-site-title').textContent = params.fullLabel;
 
-            const fpvCamera = new THREE.PerspectiveCamera(65, 1, 0.1, 400);
-            const fpvRenderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-            fpvRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            fpvRenderer.domElement.style.width = '100%';
-            fpvRenderer.domElement.style.height = '100%';
-            fpvRenderer.domElement.style.display = 'block';
-            fpvContainer.appendChild(fpvRenderer.domElement);
+                let data = slot === 'a' ? simDataA : simDataB;
+                const surfLoading = document.getElementById('surface-loading');
+                const surfPlot = document.getElementById('surface-plotly-container');
 
-            // Lighting for lunar regolith
-            const fpvSunLight = new THREE.DirectionalLight(0xffffff, 2.4);
-            fpvSunLight.position.set(40, 25, -50);
-            fpvScene.add(fpvSunLight);
-            fpvScene.add(new THREE.AmbientLight(0x1e293b, 0.35));
-
-            // Procedural Lunar Regolith Surface Mesh (updated per site)
-            const terrainSize = 180;
-            const terrainSegments = 128;
-            const fpvTerrainGeo = new THREE.PlaneGeometry(terrainSize, terrainSize, terrainSegments, terrainSegments);
-            fpvTerrainGeo.rotateX(-Math.PI / 2);
-
-            const fpvTerrainMat = new THREE.MeshStandardMaterial({
-                color: 0x8e8d8a,
-                roughness: 0.96,
-                metalness: 0.04,
-                flatShading: true
-            });
-            const fpvTerrainMesh = new THREE.Mesh(fpvTerrainGeo, fpvTerrainMat);
-            fpvScene.add(fpvTerrainMesh);
-
-            // Sun & Earth discs in the lunar sky
-            const fpvSunDisc = new THREE.Mesh(
-                new THREE.SphereGeometry(2.2, 24, 24),
-                new THREE.MeshBasicMaterial({ color: 0xfffbeb })
-            );
-            fpvScene.add(fpvSunDisc);
-
-            const fpvEarthDisc = new THREE.Mesh(
-                new THREE.SphereGeometry(3.4, 32, 32),
-                new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
-            );
-            fpvScene.add(fpvEarthDisc);
-
-            function sampleLunarHeight(x, z, seedOffset = 1.0) {
-                // Multi-frequency ridges + crater depressions
-                const ridge = Math.sin(x * 0.045 + seedOffset) * Math.cos(z * 0.045 - seedOffset) * 2.2
-                            + Math.sin((x + z) * 0.09) * 0.65;
-                const d1 = Math.hypot(x - 18, z + 26);
-                const crater1 = d1 < 16 ? -2.4 * Math.cos((d1 / 16) * (Math.PI / 2)) : (d1 < 20 ? 0.55 * Math.sin(((d1 - 16) / 4) * Math.PI) : 0);
-                const d2 = Math.hypot(x + 28, z + 34);
-                const crater2 = d2 < 22 ? -3.1 * Math.cos((d2 / 22) * (Math.PI / 2)) : 0;
-                const rim = Math.pow(Math.hypot(x, z) / 85, 2.2) * 7.5;
-                return ridge + crater1 + crater2 + rim;
-            }
-
-            let fpvSeed = 1.0;
-            const fpvPlayer = { x: 0, z: 0, yaw: 0, pitch: 0.08 };
-            const fpvKeys = {};
-
-            function rebuildFpvTerrain(seedVal) {
-                fpvSeed = seedVal;
-                const posAttr = fpvTerrainGeo.attributes.position;
-                for (let i = 0; i < posAttr.count; i++) {
-                    const x = posAttr.getX(i);
-                    const z = posAttr.getZ(i);
-                    posAttr.setY(i, sampleLunarHeight(x, z, fpvSeed));
+                if (!data) {
+                    surfLoading.classList.remove('hidden');
+                    await simulateSlot(slot);
+                    data = slot === 'a' ? simDataA : simDataB;
+                    surfLoading.classList.add('hidden');
                 }
-                posAttr.needsUpdate = true;
-                fpvTerrainGeo.computeVertexNormals();
-            }
 
-            function azElToSkyVector(azDeg, elDeg, dist = 110) {
-                const az = THREE.MathUtils.degToRad(azDeg);
-                const el = THREE.MathUtils.degToRad(elDeg);
-                const x = dist * Math.cos(el) * Math.sin(az);
-                const y = dist * Math.sin(el);
-                const z = -dist * Math.cos(el) * Math.cos(az);
-                return new THREE.Vector3(x, y, z);
-            }
+                if (data) {
+                    document.getElementById('surface-sun-info').textContent =
+                        `Sun: Az ${data.sun.az.toFixed(1)}° / Alt ${data.sun.el >= 0 ? '+' : ''}${data.sun.el.toFixed(1)}°`;
+                    document.getElementById('surface-earth-info').textContent =
+                        `Earth: Az ${data.earth.az.toFixed(1)}° / Alt ${data.earth.el >= 0 ? '+' : ''}${data.earth.el.toFixed(1)}°`;
 
-            function openSurfaceExplore(slotKey) {
-                const cached = siteDataCache[slotKey];
-                const params = cached ? cached.params : getSiteParams(slotKey);
-
-                document.getElementById('fpv-site-title').textContent = params.label;
-                const seedVal = Math.abs(params.lat * 0.37 + params.lon * 0.19) + 1.5;
-                rebuildFpvTerrain(seedVal);
-
-                fpvPlayer.x = 0;
-                fpvPlayer.z = 0;
-                fpvPlayer.yaw = 0;
-                fpvPlayer.pitch = 0.08;
-
-                // Position Sun & Earth from ephemeris if available, otherwise realistic defaults
-                const sunAz = cached && cached.sun ? cached.sun.az : 125;
-                const sunEl = cached && cached.sun ? Math.max(cached.sun.el, 6) : 18;
-                const earthAz = cached && cached.earth ? cached.earth.az : 12;
-                const earthEl = cached && cached.earth ? Math.max(cached.earth.el, 12) : 34;
-
-                const sunPos = azElToSkyVector(sunAz, sunEl, 115);
-                fpvSunDisc.position.copy(sunPos);
-                fpvSunLight.position.copy(sunPos);
-
-                const earthPos = azElToSkyVector(earthAz, earthEl, 110);
-                fpvEarthDisc.position.copy(earthPos);
-
-                document.getElementById('fpv-sun-readout').textContent = `SUN: ${sunAz.toFixed(1)}° / ${sunEl >= 0 ? '+' : ''}${sunEl.toFixed(1)}°`;
-                document.getElementById('fpv-earth-readout').textContent = `EARTH: ${earthAz.toFixed(1)}° / ${earthEl >= 0 ? '+' : ''}${earthEl.toFixed(1)}°`;
-
-                switchView('fpv');
-            }
-
-            document.getElementById('btn-explore-a').addEventListener('click', () => openSurfaceExplore('a'));
-            document.getElementById('btn-explore-b').addEventListener('click', () => openSurfaceExplore('b'));
-            document.getElementById('btn-exit-fpv').addEventListener('click', () => switchView('terrain'));
-
-            // Mouse look & keyboard movement in View 3
-            let isFpvDragging = false;
-            let prevMouseX = 0;
-            let prevMouseY = 0;
-
-            fpvRenderer.domElement.addEventListener('pointerdown', (e) => {
-                isFpvDragging = true;
-                prevMouseX = e.clientX;
-                prevMouseY = e.clientY;
-            });
-            window.addEventListener('pointerup', () => { isFpvDragging = false; });
-            window.addEventListener('pointermove', (e) => {
-                if (!isFpvDragging || viewFpv.classList.contains('hidden')) return;
-                const dx = e.clientX - prevMouseX;
-                const dy = e.clientY - prevMouseY;
-                prevMouseX = e.clientX;
-                prevMouseY = e.clientY;
-                fpvPlayer.yaw -= dx * 0.004;
-                fpvPlayer.pitch = THREE.MathUtils.clamp(fpvPlayer.pitch - dy * 0.003, -0.6, 1.15);
-            });
-
-            window.addEventListener('keydown', (e) => { fpvKeys[e.code] = true; });
-            window.addEventListener('keyup', (e) => { fpvKeys[e.code] = false; });
-
-            function resizeFpvRenderer() {
-                const rect = fpvContainer.getBoundingClientRect();
-                if (rect.width > 0 && rect.height > 0) {
-                    fpvCamera.aspect = rect.width / rect.height;
-                    fpvCamera.updateProjectionMatrix();
-                    fpvRenderer.setSize(rect.width, rect.height, false);
+                    if (data.horizon_fig) {
+                        const layout = Object.assign({}, data.horizon_fig.layout, {
+                            autosize: true,
+                            margin: { l: 55, r: 30, t: 50, b: 50 }
+                        });
+                        Plotly.react(
+                            surfPlot,
+                            data.horizon_fig.data,
+                            layout,
+                            { scrollZoom: true, displaylogo: false, responsive: true }
+                        );
+                    }
                 }
             }
-            new ResizeObserver(() => resizeFpvRenderer()).observe(fpvContainer);
 
-            function animateFpv() {
-                requestAnimationFrame(animateFpv);
-                if (viewFpv.classList.contains('hidden')) return;
+            // "Explore" buttons on Site A and Site B -> open View 3 full screen for that site
+            document.getElementById('btn-explore-a').addEventListener('click', () => {
+                activeSurfaceSlot = 'a';
+                switchView('surface');
+            });
 
-                const speed = 0.22;
-                const forwardX = -Math.sin(fpvPlayer.yaw);
-                const forwardZ = -Math.cos(fpvPlayer.yaw);
-                const rightX = Math.cos(fpvPlayer.yaw);
-                const rightZ = -Math.sin(fpvPlayer.yaw);
+            document.getElementById('btn-explore-b').addEventListener('click', () => {
+                activeSurfaceSlot = 'b';
+                switchView('surface');
+            });
 
-                if (fpvKeys['KeyW'] || fpvKeys['ArrowUp']) { fpvPlayer.x += forwardX * speed; fpvPlayer.z += forwardZ * speed; }
-                if (fpvKeys['KeyS'] || fpvKeys['ArrowDown']) { fpvPlayer.x -= forwardX * speed; fpvPlayer.z -= forwardZ * speed; }
-                if (fpvKeys['KeyD'] || fpvKeys['ArrowRight']) { fpvPlayer.x += rightX * speed; fpvPlayer.z += rightZ * speed; }
-                if (fpvKeys['KeyA'] || fpvKeys['ArrowLeft']) { fpvPlayer.x -= rightX * speed; fpvPlayer.z -= rightZ * speed; }
-
-                fpvPlayer.x = THREE.MathUtils.clamp(fpvPlayer.x, -65, 65);
-                fpvPlayer.z = THREE.MathUtils.clamp(fpvPlayer.z, -65, 65);
-
-                const groundY = sampleLunarHeight(fpvPlayer.x, fpvPlayer.z, fpvSeed);
-                fpvCamera.position.set(fpvPlayer.x, groundY + 1.75, fpvPlayer.z);
-
-                const euler = new THREE.Euler(fpvPlayer.pitch, fpvPlayer.yaw, 0, 'YXZ');
-                fpvCamera.quaternion.setFromEuler(euler);
-
-                const hdg = ((-THREE.MathUtils.radToDeg(fpvPlayer.yaw)) % 360 + 360) % 360;
-                const pitchDeg = THREE.MathUtils.radToDeg(fpvPlayer.pitch);
-                document.getElementById('fpv-heading-readout').textContent = `HDG: ${String(Math.round(hdg)).padStart(3, '0')}°`;
-                document.getElementById('fpv-pitch-readout').textContent = `PITCH: ${pitchDeg >= 0 ? '+' : ''}${Math.round(pitchDeg)}°`;
-
-                fpvRenderer.render(fpvScene, fpvCamera);
-            }
-            animateFpv();
-
-            // Initialize on startup (View 1: 3D Moon Globe)
+            // Initialize on startup (View 1: 3D Moon fitted to screen)
             setNowDateTime();
-            syncTelemetry(false, true);
-            syncCompareBPosition();
+            syncTelemetry(false, false);
+            syncSiteB();
+            fitMoonToViewport();
         });
     </script>
 </body>
