@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lunar Horizon 2D</title>
+    <!-- Opened by the "2D Horizon" button of Lunar_Horizon_Simulator_Skeleton.html (served by server.py).
+         Shows the 360-degree panorama of horizon.py with the Sun, the Earth and, if requested,
+         a satellite over the chosen observation window. -->
+    <style>
+        html, body { margin: 0; height: 100%; background: #05060a; color: #cbd5e1; font: 13px ui-monospace, Menlo, monospace; }
+        body { display: flex; flex-direction: column; }
+        #plot { flex: 1; min-height: 0; }
+        #info { display: flex; flex-wrap: wrap; gap: 6px 22px; padding: 8px 16px; border-top: 1px solid #1e293b; background: #0b1220; }
+        #info span b { font-weight: 600; }
+        .warn { color: #fb7185; }
+        #wait { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; padding: 0 24px; }
+        .spin { width: 34px; height: 34px; border: 3px solid #334155; border-top-color: #818cf8; border-radius: 50%; animation: r 1s linear infinite; }
+        @keyframes r { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div id="wait"><div class="spin" id="spin"></div><div id="msg">Computing the horizon line and asking JPL Horizons for the positions…</div></div>
+    <div id="plot"></div>
+    <div id="info" hidden></div>
+
+    <script src="/plotly.min.js"></script>
+    <script>
+        const params = Object.fromEntries(new URLSearchParams(location.search));
+        const colors = { Sole: '#ffd60a', Terra: '#4ade80' };
+
+        fetch('/api/horizon', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(params)
+        })
+            .then(async response => {
+                const result = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+                if (!response.ok || result.error) throw new Error(result.error || `HTTP ${response.status}`);
+                return result;
+            })
+            .then(({ fig, info }) => {
+                document.getElementById('wait').remove();
+                fig.layout.autosize = true;
+                Plotly.newPlot('plot', fig.data, fig.layout, { scrollZoom: false, displaylogo: false, responsive: true });
+
+                const bar = document.getElementById('info');
+                const span = document.createElement('span');
+                span.textContent = info.window;
+                bar.append(span);
+                info.bodies.forEach(body => {
+                    const item = document.createElement('span');
+                    const name = document.createElement('b');
+                    name.textContent = body.name;
+                    name.style.color = colors[body.name] || '#38bdf8';
+                    item.append(name, ` above the local horizon in ${body.visible} of ${body.total} instants · elevation ${body.el_min.toFixed(1)}° to ${body.el_max.toFixed(1)}°`);
+                    bar.append(item);
+                });
+                info.warnings.forEach(text => {
+                    const item = document.createElement('span');
+                    item.className = 'warn';
+                    item.textContent = text;
+                    bar.append(item);
+                });
+                bar.hidden = false;
+                window.dispatchEvent(new Event('resize'));
+            })
+            .catch(err => {
+                document.getElementById('spin').remove();
+                const msg = document.getElementById('msg');
+                msg.className = 'warn';
+                msg.textContent = err.message;
+            });
+    </script>
+</body>
+</html>
