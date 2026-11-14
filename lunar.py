@@ -5,6 +5,7 @@ import rasterio
 from rasterio.windows import from_bounds
 from pyproj import Transformer
 import plotly.graph_objects as go
+from plotly.colors import get_colorscale
 
 # 1. Configure GDAL to stream ONLY the exact pixel window over HTTP
 os.environ["GDAL_DISABLE_READDIR_ON_OPEN"] = "EMPTY_DIR"
@@ -55,7 +56,10 @@ def fetch_lunar_dem(site_slug: str, lat: float, lon: float, width_km: float) -> 
     """Streams the bounding box from USGS and saves a compressed local GeoTIFF."""
     output_dir = "lunar_dems"
     os.makedirs(output_dir, exist_ok=True)
-    output_file = os.path.join(output_dir, f"{site_slug}_{int(width_km)}km.tif")
+    # Include coordinates in the cache key so different sites never collide
+    output_file = os.path.join(
+        output_dir, f"{site_slug}_{lat:+.2f}_{lon:+.2f}_{int(width_km)}km.tif"
+    )
 
     # Skip network download if we already cached this exact file locally
     if os.path.exists(output_file):
@@ -71,7 +75,12 @@ def fetch_lunar_dem(site_slug: str, lat: float, lon: float, width_km: float) -> 
         min_x, min_y = transformer.transform(min_lon, min_lat)
         max_x, max_y = transformer.transform(max_lon, max_lat)
 
-        window = from_bounds(min_x, min_y, max_x, max_y, src.transform)
+        # Snap to whole pixels so the saved transform matches the data read
+        window = (
+            from_bounds(min_x, min_y, max_x, max_y, src.transform)
+            .round_offsets()
+            .round_lengths()
+        )
         w_px, h_px = int(window.width), int(window.height)
         print(
             f"Downloading window: {w_px} x {h_px} pixels (~{(w_px * h_px * 2) / 1e6:.1f} MB)..."
@@ -97,13 +106,20 @@ def fetch_lunar_dem(site_slug: str, lat: float, lon: float, width_km: float) -> 
     return output_file
 
 
-def render_in_plotly(tif_path: str, title: str, lat: float, lon: float):
-    """Loads the local GeoTIFF and opens an interactive 3D render in the browser."""
+def render_to_html(tif_path: str, title: str, lat: float, lon: float) -> str:
+    """Loads the local GeoTIFF and writes an interactive 3D render to an HTML file."""
     with rasterio.open(tif_path) as src:
         raw_dem = src.read(1).astype(np.float32)
-        res_x_m = abs(src.transform.a)
+        # Equirectangular grid: a pixel spans res·cos(lat) metres on the ground E-W
+        res_x_m = abs(src.transform.a) * math.cos(math.radians(lat))
         res_y_m = abs(src.transform.e)
         nodata = src.nodata
+
+        # Pixel position of the requested centre (lat, lon) inside the crop
+        to_dem = Transformer.from_crs(
+            "+proj=longlat +R=1737400 +no_defs", src.crs, always_xy=True
+        )
+        center_col, center_row = (~src.transform) * to_dem.transform(lon, lat)
 
         # Check scale factor (LOLA 118m stores int16 in 0.5m units)
         scale_factor = src.scales[0] if src.scales and src.scales[0] != 1.0 else 0.5
@@ -124,6 +140,24 @@ def render_in_plotly(tif_path: str, title: str, lat: float, lon: float):
     x_km = np.arange(cols) * (res_x_m / 1000.0)
     y_km = np.arange(rows) * (res_y_m / 1000.0)
 
+    # Centre marker: ground position of (lat, lon) and the terrain height there.
+    # The -0.5 moves from pixel edges to pixel centres; rows are counted from the
+    # south because the DEM was flipped above.
+    center_x_km = (center_col - 0.5) * (res_x_m / 1000.0)
+    center_y_km = (rows - 1 - (center_row - 0.5)) * (res_y_m / 1000.0)
+    ci = int(np.clip(round(center_col - 0.5), 0, cols - 1))
+    cj = int(np.clip(round(rows - 1 - (center_row - 0.5)), 0, rows - 1))
+    center_z_km = float(z_km[cj, ci]) if not np.isnan(z_km[cj, ci]) else 0.0
+    center_elev_m = center_z_km * 1000.0 + min_elev_m
+    pole_km = max(0.25 * relief_km, 0.5)  # height of the marker pole above the ground
+
+    # plotly.js only knows a few colorscale names; pass explicit lists to buttons
+    gray_scale = get_colorscale("Gray")
+    turbo_scale = get_colorscale("Turbo")
+    viridis_scale = get_colorscale("Viridis")
+    # Ground extents for manual aspect ratios
+    y_ratio = y_km[-1] / x_km[-1]
+
     print(
         f"Rendering 3D surface ({cols}x{rows} grid, max vertical relief: {relief_km:.2f} km)..."
     )
@@ -134,8 +168,14 @@ def render_in_plotly(tif_path: str, title: str, lat: float, lon: float):
                 x=x_km,
                 y=y_km,
                 z=z_km,
-                colorscale="Gray",
+                colorscale=gray_scale,
                 colorbar=dict(title="Elevation (km)", ticksuffix=" km"),
+                # No highlight lines drawn across the surface while hovering
+                contours=dict(
+                    x=dict(highlight=False),
+                    y=dict(highlight=False),
+                    z=dict(highlight=False),
+                ),
                 lighting=dict(
                     ambient=0.18,
                     diffuse=0.9,
@@ -149,7 +189,25 @@ def render_in_plotly(tif_path: str, title: str, lat: float, lon: float):
                     "South-North: %{y:.1f} km<br>"
                     "Relative Elevation: %{z:.2f} km<extra></extra>"
                 ),
-            )
+            ),
+            # Vertical pole + marker showing the centre of the map
+            go.Scatter3d(
+                x=[center_x_km, center_x_km],
+                y=[center_y_km, center_y_km],
+                z=[center_z_km, center_z_km + pole_km],
+                mode="lines+markers+text",
+                line=dict(color="#ff3b30", width=6),
+                marker=dict(size=[3, 7], color="#ff3b30", symbol=["circle", "diamond"]),
+                text=["", "Center"],
+                textposition="top center",
+                textfont=dict(color="#ff3b30", size=13),
+                name="Map center",
+                showlegend=False,
+                hovertemplate=(
+                    f"Map center<br>Lat {lat:.3f}°, Lon {lon:.3f}°<br>"
+                    f"Elevation: {center_elev_m:.0f} m<extra></extra>"
+                ),
+            ),
         ]
     )
 
@@ -171,6 +229,10 @@ def render_in_plotly(tif_path: str, title: str, lat: float, lon: float):
             xaxis_title="West → East (km)",
             yaxis_title="South → North (km)",
             zaxis_title="Elevation (km)",
+            # No projection lines from the cursor to the axis walls
+            xaxis_showspikes=False,
+            yaxis_showspikes=False,
+            zaxis_showspikes=False,
             aspectmode="data",  # 1:1 true lunar scale by default
             camera=dict(eye=dict(x=1.4, y=-1.4, z=0.8)),
         ),
@@ -187,17 +249,17 @@ def render_in_plotly(tif_path: str, title: str, lat: float, lon: float):
                     dict(
                         label="Lunar Gray",
                         method="restyle",
-                        args=["colorscale", "Gray"],
+                        args=[{"colorscale": [gray_scale]}, [0]],  # surface only
                     ),
                     dict(
                         label="Topo Heatmap",
                         method="restyle",
-                        args=["colorscale", "Turbo"],
+                        args=[{"colorscale": [turbo_scale]}, [0]],  # surface only
                     ),
                     dict(
                         label="Viridis",
                         method="restyle",
-                        args=["colorscale", "Viridis"],
+                        args=[{"colorscale": [viridis_scale]}, [0]],  # surface only
                     ),
                 ],
             ),
@@ -222,7 +284,7 @@ def render_in_plotly(tif_path: str, title: str, lat: float, lon: float):
                             {
                                 "scene.aspectmode": "manual",
                                 "scene.aspectratio": dict(
-                                    x=1, y=rows / cols, z=(relief_km / (x_km[-1])) * 3.0
+                                    x=1, y=y_ratio, z=(relief_km / (x_km[-1])) * 3.0
                                 ),
                             }
                         ],
@@ -234,7 +296,7 @@ def render_in_plotly(tif_path: str, title: str, lat: float, lon: float):
                             {
                                 "scene.aspectmode": "manual",
                                 "scene.aspectratio": dict(
-                                    x=1, y=rows / cols, z=(relief_km / (x_km[-1])) * 5.0
+                                    x=1, y=y_ratio, z=(relief_km / (x_km[-1])) * 5.0
                                 ),
                             }
                         ],
@@ -244,7 +306,11 @@ def render_in_plotly(tif_path: str, title: str, lat: float, lon: float):
         ],
     )
 
-    fig.show()
+    html_path = os.path.splitext(tif_path)[0] + ".html"
+    fig.write_html(html_path, include_plotlyjs=True, full_html=True)
+    size_mb = os.path.getsize(html_path) / (1024 * 1024)
+    print(f"Saved interactive HTML: {html_path} ({size_mb:.1f} MB)")
+    return html_path
 
 
 def main():
@@ -276,7 +342,8 @@ def main():
         slug = "copernicus_crater"
 
     tif_path = fetch_lunar_dem(slug, lat, lon, width_km)
-    render_in_plotly(tif_path, name, lat, lon)
+    html_path = render_to_html(tif_path, name, lat, lon)
+    print(f"Open it in a browser: {os.path.abspath(html_path)}")
 
 
 if __name__ == "__main__":
