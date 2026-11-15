@@ -1,6 +1,7 @@
 """Render lunar-orbiter visibility on lunar terrain using JPL Horizons and LOLA."""
 
 import argparse
+import csv
 import math
 import os
 import urllib.parse
@@ -24,6 +25,7 @@ from horizon import (
 )
 
 HORIZONS_URL = "https://ssd.jpl.nasa.gov/api/horizons.api"
+FILE_SATELLITI = os.path.join(os.path.dirname(os.path.abspath(__file__)), "satellites_id.csv")
 SCALA_VISIBILITA = [
     [0.0, "#111820"],
     [1.0 / 255.0, "#111820"],
@@ -72,7 +74,7 @@ def get_lunar_ephemeris(target_id, lat, lon, alt_km, start_time, stop_time, step
     # Horizons racchiude la tabella tra i marcatori $$SOE e $$EOE
     i_soe, i_eoe = testo.find("$$SOE"), testo.find("$$EOE")
     if i_soe == -1 or i_eoe == -1:
-        raise ValueError(f"Tabella delle effemeridi non trovata. Risposta di Horizons:\n{testo[:1500]}")
+        raise ValueError(f"Ephemeris table not found. Horizons answered:\n{testo[:1500]}")
 
     righe = []
     # Columns: date, solar/lunar flags, azimuth, elevation, range, range rate.
@@ -83,7 +85,7 @@ def get_lunar_ephemeris(target_id, lat, lon, alt_km, start_time, stop_time, step
         istante = datetime.strptime(campi[0], "%Y-%b-%d %H:%M").replace(tzinfo=timezone.utc)
         righe.append((istante, float(campi[3]), float(campi[4]), float(campi[5])))
     if not righe:
-        raise ValueError("Horizons ha restituito una tabella vuota.")
+        raise ValueError("Horizons returned an empty table.")
     return righe
 
 
@@ -347,7 +349,7 @@ def disegna(nome, satellite, x_km, y_km, z_km, fotogrammi, file_html):
 def scegli_sito(a):
     """Restituisce (nome, lat, lon) dagli argomenti o dal menu interattivo."""
     if a.lat is not None and a.lon is not None:
-        return a.nome or "Sito personalizzato", a.lat, a.lon
+        return a.nome or "Custom site", a.lat, a.lon
     scelta = a.sito
     if scelta is None:
         print("\n=== VISIBILITA' DEI SATELLITI DALLA LUNA ===")
@@ -356,7 +358,7 @@ def scegli_sito(a):
         print(" [ C] Latitudine e longitudine personalizzate")
         scelta = input("\nScegli un sito (predefinito = 1, Tycho): ").strip().upper() or "1"
     if scelta == "C":
-        nome = input("Nome del sito: ").strip() or "Sito personalizzato"
+        nome = input("Nome del sito: ").strip() or "Custom site"
         lat = float(input("Latitudine (-90 a 90): ").strip())
         lon = float(input("Longitudine est (-180 a 360): ").strip())
         return nome, lat, lon
@@ -366,19 +368,64 @@ def scegli_sito(a):
     return SITI[scelta]
 
 
+def carica_catalogo(percorso=FILE_SATELLITI):
+    """Legge satellites_id.csv (Nome;ID, senza intestazione) e restituisce {nome: id Horizons}."""
+    catalogo = {}
+    if not os.path.exists(percorso):
+        return catalogo
+    with open(percorso, newline="", encoding="utf-8-sig") as f:
+        for riga in csv.reader(f, delimiter=";"):
+            if len(riga) >= 2 and riga[0].strip() and riga[1].strip():
+                catalogo[riga[0].strip()] = riga[1].strip()
+    return catalogo
+
+
+def risolvi_satellite(testo, catalogo=None):
+    """
+    Restituisce (nome, id Horizons) per un nome o un ID.
+
+    I nomi del catalogo (senza distinzione tra maiuscole e minuscole) vengono
+    tradotti nel loro ID; un ID del catalogo riprende il suo nome. Tutto il
+    resto viene passato a Horizons cosi' com'e'.
+    """
+    catalogo = carica_catalogo() if catalogo is None else catalogo
+    e = testo.strip().strip("\"'")
+    for nome, id_horizons in catalogo.items():
+        if e.lower() == nome.lower() or e == id_horizons:
+            return nome, id_horizons
+    return e, e
+
+
 def scegli_satelliti(valore):
-    """Read comma-separated Horizons target names or IDs."""
-    testo = valore or input(
-        "Inserisci nomi o ID Horizons (es. LRO, -85), separati da virgole: "
-    )
-    satelliti = list(dict.fromkeys(
-        elemento.strip().strip("\"'")
-        for elemento in testo.split(",")
-        if elemento.strip().strip("\"'")
-    ))
-    if not satelliti:
+    """Restituisce [(nome, id Horizons)] da numeri di menu, nomi del catalogo o ID liberi."""
+    catalogo = carica_catalogo()
+    nomi = list(catalogo)
+    if valore is None:
+        if nomi:
+            print("\nSatelliti disponibili (satellites_id.csv):")
+            for k, nome in enumerate(nomi, 1):
+                print(f" [{k:>2}] {nome} ({catalogo[nome]})")
+            valore = input(
+                "Scegli numeri, nomi o ID Horizons separati da virgole ('tutti' per tutti): "
+            )
+        else:
+            valore = input("Inserisci nomi o ID Horizons (es. LRO, -85), separati da virgole: ")
+
+    scelti = {}
+    for elemento in valore.split(","):
+        e = elemento.strip().strip("\"'")
+        if not e:
+            continue
+        if e.lower() in ("tutti", "all"):
+            scelti.update(catalogo)
+        elif e.isdigit() and 1 <= int(e) <= len(nomi):  # numero del menu
+            scelti[nomi[int(e) - 1]] = catalogo[nomi[int(e) - 1]]
+        else:
+            nome, id_horizons = risolvi_satellite(e, catalogo)
+            scelti[nome] = id_horizons
+    if not scelti:
         raise SystemExit("Inserisci almeno un satellite.")
-    return satelliti
+    return list(scelti.items())
 
 
 def main():
@@ -388,7 +435,8 @@ def main():
     )
     p.add_argument(
         "--satellites",
-        help="nomi o ID Horizons separati da virgole (es. LRO,-85); richiesti interattivamente se omesso",
+        help="nomi di satellites_id.csv, 'tutti' o ID Horizons separati da virgole "
+             "(es. Danuri,-85); senza questo appare il menu",
     )
     p.add_argument("--sito", help="numero del sito nel catalogo (senza questo e senza --lat/--lon appare il menu)")
     p.add_argument("--lat", type=float, help="latitudine in gradi")
@@ -437,11 +485,22 @@ def main():
     if not math.isfinite(sito_alt_m):
         raise SystemExit("Il DEM non contiene una quota valida al centro del sito.")
 
-    for satellite in satelliti:
-        print(f"Richiesta a JPL Horizons: {satellite} da {a.inizio} a {fine} ogni {a.passo}...")
-        ephemeris = get_lunar_ephemeris(
-            satellite, lat, lon, sito_alt_m / 1000.0, a.inizio, fine, a.passo
+    for satellite, id_horizons in satelliti:
+        print(
+            f"Richiesta a JPL Horizons: {satellite} ({id_horizons}) "
+            f"da {a.inizio} a {fine} ogni {a.passo}..."
         )
+        try:
+            ephemeris = get_lunar_ephemeris(
+                id_horizons, lat, lon, sito_alt_m / 1000.0, a.inizio, fine, a.passo
+            )
+        except ValueError as errore:
+            # Es. missione conclusa: Horizons non ha effemeridi nell'intervallo richiesto.
+            testo = str(errore)
+            k = testo.find("No ephemeris")
+            motivo = " ".join(testo[k if k >= 0 else 0 :][:200].split())
+            print(f"{satellite}: saltato, nessuna effemeride disponibile. {motivo}")
+            continue
 
         fotogrammi, righe_csv = [], []
         for k, (istante, az, el, range_km) in enumerate(ephemeris):
@@ -476,7 +535,7 @@ def main():
                 "percentuale_terreno_visibile\n"
             )
             f.write("\n".join(righe_csv) + "\n")
-        disegna(satellite, satellite, x_km, x_km, z_km, fotogrammi, base + ".html")
+        disegna(nome, satellite, x_km, x_km, z_km, fotogrammi, base + ".html")
 
         perc = [fotogramma[4] for fotogramma in fotogrammi]
         print(

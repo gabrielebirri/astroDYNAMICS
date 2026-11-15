@@ -40,6 +40,7 @@ LUNAR_SITES = {
         129.1,
         220,
     ),
+    "11": ("Apollo 11 - Tranquility Base (Mare Tranquillitatis)", 0.67416, 23.47314, 80),
 }
 
 

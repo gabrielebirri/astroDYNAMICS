@@ -54,8 +54,9 @@ SITI = {
     "8": ("Montes Apenninus", 19.5, -1.5),
     "9": ("Rupes Recta", -21.8, -7.8),
     "10": ("Tsiolkovskiy Crater", -20.4, 129.1),
-    "11": ("Polo sud - Cresta di Shackleton", -89.45, 222.69),
-    "12": ("Polo sud - Massiccio Malapert", -85.99, -2.93),
+    "11": ("South Pole - Shackleton Ridge", -89.45, 222.69),
+    "12": ("South Pole - Malapert Massif", -85.99, -2.93),
+    "13": ("Apollo 11 - Tranquility Base", 0.67416, 23.47314),
 }
 
 
@@ -211,7 +212,7 @@ def calcola_orizzonte(dem, transform, crs, lat, lon, h_oss, raggio_m, passo_az, 
     x0, y0 = tr.transform(lon, lat)
     quota0 = float(campiona(dem, transform, np.array([x0]), np.array([y0]))[0])
     if math.isnan(quota0):
-        raise SystemExit("Nel punto scelto il DEM non contiene dati.")
+        raise SystemExit("The DEM has no data at the chosen point.")
     occhio = (R_LUNA + quota0 + h_oss) * alto
 
     az = np.arange(0.0, 360.0, passo_az)
@@ -278,9 +279,9 @@ def disegna(nome, az, piani, dist_km, lat, lon, h_oss, quota0, file_html):
     # Linea dell'orizzonte vera e propria, con i dettagli al passaggio del mouse
     fig.add_trace(go.Scatter(
         x=x3, y=tre(orizzonte), mode="lines", line=dict(color="#ffffff", width=1.6),
-        name="linea dell'orizzonte", customdata=np.stack([tre(az), tre(dist_km)], axis=-1),
-        hovertemplate=("Azimut %{customdata[0]:.1f}°<br>Orizzonte a %{y:.2f}°<br>"
-                       "Rilievo a %{customdata[1]:.1f} km<extra></extra>"),
+        name="horizon line", customdata=np.stack([tre(az), tre(dist_km)], axis=-1),
+        hovertemplate=("Azimuth %{customdata[0]:.1f}°<br>Horizon at %{y:.2f}°<br>"
+                       "Relief at %{customdata[1]:.1f} km<extra></extra>"),
     ))
     # Barra dei colori: distanza dei rilievi
     tacche = [v for v in (1, 2, 5, 10, 20, 50, 100, 200, 300) if lim_km[0] <= v <= lim_km[-1]]
@@ -290,7 +291,7 @@ def disegna(nome, az, piani, dist_km, lat, lon, h_oss, quota0, file_html):
             color=[0.0], cmin=0.0, cmax=1.0, showscale=True,
             colorscale=[[float(v), c] for v, c in zip(t, colori)],
             colorbar=dict(
-                title=dict(text="Distanza<br>del rilievo", font=dict(size=12)), thickness=14, len=0.75,
+                title=dict(text="Relief<br>distance", font=dict(size=12)), thickness=14, len=0.75,
                 tickvals=[float((math.log(v) - math.log(lim_km[0])) / (math.log(lim_km[-1]) - math.log(lim_km[0]))) for v in tacche],
                 ticktext=[f"{v} km" for v in tacche],
             ),
@@ -308,35 +309,35 @@ def disegna(nome, az, piani, dist_km, lat, lon, h_oss, quota0, file_html):
         fig.add_trace(go.Scatter(
             x=[az_t - 360.0, az_t, az_t + 360.0], y=[el_t] * 3, mode="markers+text",
             marker=dict(size=14, color="#4ea8de", line=dict(color="white", width=1)),
-            text=["Terra (media)"] * 3, textposition="top center", textfont=dict(color="#4ea8de"),
-            name="Terra, posizione media",
-            hovertemplate=f"Terra, posizione media<br>Azimut {az_t:.1f}°<br>Elevazione {el_t:.2f}°<extra></extra>",
+            text=["Earth (mean)"] * 3, textposition="top center", textfont=dict(color="#4ea8de"),
+            name="Earth, mean position",
+            hovertemplate=f"Earth, mean position<br>Azimuth {az_t:.1f}°<br>Elevation {el_t:.2f}°<extra></extra>",
         ))
         y_max = max(y_max, math.ceil(el_t + 9.0))
         y_min = min(y_min, math.floor(el_t - 9.0))
         nota_terra = ""
     elif el_t > 0:
-        nota_terra = f" | Terra alta nel cielo (circa {el_t:.0f}°, azimut {az_t:.0f}°)"
+        nota_terra = f" | Earth high in the sky (about {el_t:.0f}°, azimuth {az_t:.0f}°)"
     else:
-        nota_terra = " | Terra mai visibile (lato nascosto)"
+        nota_terra = " | Earth never visible (far side)"
 
-    nomi = ["N", "NE", "E", "SE", "S", "SO", "O", "NO"]
+    nomi = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
     tick = np.arange(-360, 721, 15)
     etichette = [f"{nomi[int(t % 360) // 45]} {int(t % 360)}°" if t % 45 == 0 else f"{int(t % 360)}°" for t in tick]
-    viste = [("Nord", 0), ("Est", 90), ("Sud", 180), ("Ovest", 270)] + ([("Terra", az_t)] if terra_bassa else [])
+    viste = [("North", 0), ("East", 90), ("South", 180), ("West", 270)] + ([("Earth", az_t)] if terra_bassa else [])
     centro = az_t if terra_bassa else 0.0
 
     fig.update_layout(
-        title=dict(text=(f"<b>Orizzonte a 360° - {nome}</b><br><span style='font-size:12px;color:#aaa'>"
-                         f"Lat {lat:.3f}°, Lon {lon:.3f}° | quota del terreno {quota0:.0f} m | "
-                         f"osservatore a {h_oss:g} m dal suolo{nota_terra} | trascina per ruotare</span>"),
+        title=dict(text=(f"<b>360° horizon - {nome}</b><br><span style='font-size:12px;color:#aaa'>"
+                         f"Lat {lat:.3f}°, Lon {lon:.3f}° | terrain elevation {quota0:.0f} m | "
+                         f"observer {h_oss:g} m above the ground{nota_terra} | drag to rotate</span>"),
                    x=0.02, y=0.96),
         template="plotly_dark", paper_bgcolor="#05060a", plot_bgcolor="#05060a",
         dragmode="pan", hovermode="closest", margin=dict(l=60, r=90, t=110, b=50),
         xaxis=dict(range=[centro - 60, centro + 60], tickvals=tick, ticktext=etichette,
-                   showgrid=True, gridcolor="#1c1f26", zeroline=False, title="Direzione di osservazione"),
+                   showgrid=True, gridcolor="#1c1f26", zeroline=False, title="Viewing direction"),
         yaxis=dict(range=[y_min, y_max], fixedrange=True, gridcolor="#1c1f26", zeroline=False,
-                   title="Elevazione sull'orizzontale (°)"),
+                   title="Elevation above the horizontal (°)"),
         legend=dict(orientation="h", y=-0.15),
         updatemenus=[dict(
             type="buttons", direction="right", x=0.02, y=1.08, xanchor="left", showactive=False,
@@ -352,7 +353,7 @@ def disegna(nome, az, piani, dist_km, lat, lon, h_oss, quota0, file_html):
 def scegli_sito(a):
     """Restituisce (nome, lat, lon) dagli argomenti o dal menu interattivo."""
     if a.lat is not None and a.lon is not None:
-        return a.nome or "Sito personalizzato", a.lat, a.lon
+        return a.nome or "Custom site", a.lat, a.lon
     scelta = a.sito
     if scelta is None:
         print("\n=== ORIZZONTE LUNARE A 360 GRADI ===")
@@ -361,7 +362,7 @@ def scegli_sito(a):
         print(" [ C] Latitudine e longitudine personalizzate")
         scelta = input("\nScegli un sito (predefinito = 11, cresta di Shackleton): ").strip().upper() or "11"
     if scelta == "C":
-        nome = input("Nome del sito: ").strip() or "Sito personalizzato"
+        nome = input("Nome del sito: ").strip() or "Custom site"
         lat = float(input("Latitudine (-90 a 90): ").strip())
         lon = float(input("Longitudine est (-180 a 360): ").strip())
         return nome, lat, lon

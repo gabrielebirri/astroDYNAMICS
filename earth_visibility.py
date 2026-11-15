@@ -73,7 +73,7 @@ def get_lunar_ephemeris(target_id, lat, lon, alt_km, start_time, stop_time, step
     # Horizons racchiude la tabella tra i marcatori $$SOE e $$EOE
     i_soe, i_eoe = testo.find("$$SOE"), testo.find("$$EOE")
     if i_soe == -1 or i_eoe == -1:
-        raise ValueError(f"Tabella delle effemeridi non trovata. Risposta di Horizons:\n{testo[:1500]}")
+        raise ValueError(f"Ephemeris table not found. Horizons answered:\n{testo[:1500]}")
 
     righe = []
     # Colonne: data, flag solare, flag lunare, azimut, elevazione, (vuota)
@@ -84,7 +84,7 @@ def get_lunar_ephemeris(target_id, lat, lon, alt_km, start_time, stop_time, step
         istante = datetime.strptime(campi[0], "%Y-%b-%d %H:%M").replace(tzinfo=timezone.utc)
         righe.append((istante, float(campi[3]), float(campi[4])))
     if not righe:
-        raise ValueError("Horizons ha restituito una tabella vuota.")
+        raise ValueError("Horizons returned an empty table.")
     return righe
 
 
@@ -313,7 +313,7 @@ def disegna(nome, lat, lon, x_km, y_km, z_km, quota_min_m, fotogrammi, file_html
 def scegli_sito(a):
     """Restituisce (nome, lat, lon) dagli argomenti o dal menu interattivo."""
     if a.lat is not None and a.lon is not None:
-        return a.nome or "Sito personalizzato", a.lat, a.lon
+        return a.nome or "Custom site", a.lat, a.lon
     scelta = a.sito
     if scelta is None:
         print("\n=== VISIBILITA' DELLA TERRA DALLA LUNA ===")
@@ -322,7 +322,7 @@ def scegli_sito(a):
         print(" [ C] Latitudine e longitudine personalizzate")
         scelta = input("\nScegli un sito (predefinito = 1, Tycho): ").strip().upper() or "1"
     if scelta == "C":
-        nome = input("Nome del sito: ").strip() or "Sito personalizzato"
+        nome = input("Nome del sito: ").strip() or "Custom site"
         lat = float(input("Latitudine (-90 a 90): ").strip())
         lon = float(input("Longitudine est (-180 a 360): ").strip())
         return nome, lat, lon

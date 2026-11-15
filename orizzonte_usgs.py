@@ -56,6 +56,7 @@ SITI = {
     "10": ("Tsiolkovskiy Crater", -20.4, 129.1),
     "11": ("Polo sud - Cresta di Shackleton", -89.45, 222.69),
     "12": ("Polo sud - Massiccio Malapert", -85.99, -2.93),
+    "13": ("Apollo 11 - Tranquility Base", 0.67416, 23.47314),
 }
 
 

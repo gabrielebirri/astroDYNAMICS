@@ -1,5 +1,5 @@
 """
-Backend web di Lunar Horizon Simulator.
+Backend web di Moon View.
 
 Serve Lunar_Horizon_Simulator_Skeleton.html e mette a disposizione della pagina
 i calcoli degli script gia' presenti nella cartella, senza duplicarli:
@@ -72,7 +72,7 @@ def _errore_utente(e):
 def _errore_generico(e):
     if isinstance(e, HTTPException):  # 404, 405...: restano tali
         return jsonify(error=e.description), e.code
-    app.logger.exception("Errore non previsto")
+    app.logger.exception("Unexpected error")
     return jsonify(error=f"{type(e).__name__}: {e}"), 500
 
 
@@ -92,16 +92,18 @@ def leggi_sito(d):
     try:
         lat, lon = float(d.get("lat")), float(d.get("lon"))
     except (TypeError, ValueError):
-        raise Errore("Latitudine o longitudine non valide.")
-    if not (-90.0 <= lat <= 90.0) or not math.isfinite(lon):
-        raise Errore("La latitudine deve essere tra -90 e 90 gradi.")
+        raise Errore("Invalid latitude or longitude.")
+    if not (-90.0 <= lat <= 90.0):
+        raise Errore("Latitude must be between -90 and 90 degrees.")
+    if not (-180.0 <= lon <= 180.0):
+        raise Errore("Longitude must be between -180 and 180 degrees.")
     lon = ((lon + 180.0) % 360.0) - 180.0
     for nome, lat_s, lon_s in horizon.SITI.values():
         if abs(lat - lat_s) < 1e-4 and abs(lon - (((lon_s + 180.0) % 360.0) - 180.0)) < 1e-4:
             break
     else:
         # Coordinate nel nome: due siti personalizzati diversi non condividono la cache
-        nome = f"Sito {lat:+.4f} {lon:+.4f}"
+        nome = f"Site {lat:+.4f} {lon:+.4f}"
     slug = "".join(c if c.isalnum() else "_" for c in nome.lower()).strip("_")
     return nome, lat, lon, slug
 
@@ -113,18 +115,18 @@ def leggi_tempi(d):
         try:
             return datetime.strptime(testo, "%Y-%m-%d %H:%M")
         except ValueError:
-            raise Errore(f"Istante '{chiave}' non valido: usare AAAA-MM-GG HH:MM (UTC).")
+            raise Errore(f"Invalid '{chiave}' time: use YYYY-MM-DD HH:MM (UTC).")
 
     inizio, fine = istante("start"), istante("end")
     if fine <= inizio:
-        raise Errore("L'istante finale deve essere successivo a quello iniziale.")
+        raise Errore("The end time must be after the start time.")
     m = re.fullmatch(r"\s*(\d+)\s*([mhd])\s*", str(d.get("step") or "12 h").lower())
     if not m or int(m.group(1)) == 0:
-        raise Errore("Passo non valido. Esempi: '30 m', '6 h', '1 d'.")
+        raise Errore("Invalid time step. Examples: '30 m', '6 h', '1 d'.")
     minuti = int(m.group(1)) * {"m": 1, "h": 60, "d": 1440}[m.group(2)]
     n = int((fine - inizio).total_seconds() // 60 // minuti) + 1
     if n > MAX_ISTANTI:
-        raise Errore(f"Troppi istanti ({n}, massimo {MAX_ISTANTI}): aumentare il passo o accorciare l'intervallo.")
+        raise Errore(f"Too many instants ({n}, max {MAX_ISTANTI}): use a longer step or a shorter window.")
     return f"{inizio:%Y-%m-%d %H:%M}", f"{fine:%Y-%m-%d %H:%M}", f"{m.group(1)} {m.group(2)}"
 
 
@@ -153,10 +155,10 @@ def effemeridi(funzione, *argomenti):
                 raise Errore(f"JPL Horizons: {testo[:600]}")
             except urllib.error.HTTPError as e:
                 if e.code not in (429, 502, 503) or tentativo == 3:
-                    raise Errore(f"JPL Horizons ha risposto con un errore: {e}")
+                    raise Errore(f"JPL Horizons answered with an error: {e}")
                 time.sleep(1.5 * (tentativo + 1))
             except OSError as e:
-                raise Errore(f"JPL Horizons non raggiungibile: {e}")
+                raise Errore(f"JPL Horizons is not reachable: {e}")
         _cache_effemeridi[chiave] = tabella
         while len(_cache_effemeridi) > 32:
             _cache_effemeridi.popitem(last=False)
@@ -174,7 +176,7 @@ def _ritaglio(slug, lat, lon):
     try:
         return horizon.scarica_ritaglio(horizon.USGS_LOLA_118M_URL, slug, lat, lon, RAGGIO_KM * 1000.0)
     except Exception as e:
-        raise Errore(f"Scarico del DEM dal server USGS non riuscito: {e}")
+        raise Errore(f"Could not download the DEM from the USGS server: {e}")
 
 
 def terreno(nome, lat, lon, slug):
@@ -194,17 +196,18 @@ def terreno(nome, lat, lon, slug):
         z = z_ext[i0:i1, i0:i1]
         validi = ~np.isnan(z)
         if not validi.any() or not math.isfinite(float(z_ext[n_ext, n_ext])):
-            raise Errore("Nel punto scelto il DEM non contiene dati.")
+            raise Errore("The DEM has no data at the chosen point.")
 
         dz_dn, dz_de = np.gradient(z_ext, passo_m)
         normali = np.stack([-dz_de, -dz_dn, np.ones_like(z_ext)], axis=-1)[i0:i1, i0:i1]
         normali /= np.linalg.norm(normali, axis=-1, keepdims=True)
         pendenza, roughness = metriche_terreno(z, passo_m, 0, z.shape[0])
+        sabbiosita, ghiaccio = strati_esempio(z, pendenza, roughness, passo_m, lat, lon)
 
         t = dict(
             nome=nome, lat=lat, lon=lon, z_ext=z_ext, passo_m=passo_m, n_ext=n_ext, i0=i0, i1=i1,
             z=z, validi=validi, normali=np.nan_to_num(normali), raggio_m=raggio_m,
-            pendenza=pendenza, roughness=roughness,
+            pendenza=pendenza, roughness=roughness, sabbiosita=sabbiosita, ghiaccio=ghiaccio,
             distanze=ephemeris.distanze_di_marcia(passo_m, math.hypot(semilato_m, semilato_m) + raggio_m),
             quota_centro_m=float(z_ext[n_ext, n_ext]),
         )
@@ -286,6 +289,54 @@ def metriche_terreno(z_ext, passo_m, i0, i1):
     return pendenza.astype("<f4"), roughness.astype("<f4")
 
 
+def _rumore_morbido(rng, n, celle):
+    """Rumore continuo in [0, 1]: griglia casuale grossolana interpolata sulla griglia del sito."""
+    nodi = np.arange(celle)
+    x = np.linspace(0.0, celle - 1.0, n)
+    righe = np.array([np.interp(x, nodi, riga) for riga in rng.random((celle, celle))])
+    return np.array([np.interp(x, nodi, colonna) for colonna in righe.T]).T
+
+
+def _media_locale(a, raggio):
+    """Media su una finestra quadrata di lato 2*raggio+1 (immagine integrale, bordi replicati)."""
+    k = 2 * raggio + 1
+    c = np.pad(np.cumsum(np.cumsum(np.pad(a, raggio, mode="edge"), axis=0), axis=1), ((1, 0), (1, 0)))
+    return (c[k:, k:] - c[:-k, k:] - c[k:, :-k] + c[:-k, :-k]) / (k * k)
+
+
+def strati_esempio(z, pendenza, roughness, passo_m, lat, lon):
+    """
+    Strati DI ESEMPIO (non misure): indici 0-100 di sabbiosita' del suolo e di presenza di ghiaccio.
+
+    Sono costruiti dal solo DEM con regole plausibili, per mostrare come apparirebbero
+    sulla mesh in attesa di dati reali (es. Diviner, LEND, Mini-RF):
+      - sabbiosita': regolite fine dove il terreno e' piano e liscio, roccia esposta sui pendii;
+      - ghiaccio: depressioni e versanti rivolti al polo, piu' probabile alle alte latitudini.
+    Il rumore dipende solo dalle coordinate: lo stesso sito da' sempre la stessa mappa.
+    """
+    n = z.shape[0]
+    validi = np.isfinite(z)
+    rng = np.random.default_rng(int(round((lat + 90.0) * 1e4)) * 10_000_000 + int(round((lon + 180.0) * 1e4)))
+    rumore = lambda: 0.65 * _rumore_morbido(rng, n, 7) + 0.35 * _rumore_morbido(rng, n, 23)  # noqa: E731
+
+    piano = np.clip(1.0 - np.nan_to_num(pendenza, nan=90.0) / 25.0, 0.0, 1.0)
+    liscio = np.clip(1.0 - np.nan_to_num(roughness, nan=0.0) / 60.0, 0.0, 1.0)
+    sabbiosita = 100.0 * np.clip(0.7 * piano * liscio + 0.3 * rumore(), 0.0, 1.0)
+
+    quota = np.where(validi, z, np.nanmean(z))
+    incavo = np.maximum(_media_locale(quota, max(1, round(5000.0 / passo_m))) - quota, 0.0)
+    incavo = np.clip(incavo / max(float(np.percentile(incavo, 95)), 50.0), 0.0, 1.0)
+    dz_dn = np.gradient(quota, passo_m, axis=0)  # le righe vanno da sud a nord
+    verso_polo = np.clip(-np.sign(lat) * dz_dn / 0.2, 0.0, 1.0)
+    latitudine = 0.45 + 0.55 * np.clip((abs(lat) - 60.0) / 28.0, 0.0, 1.0)
+    ghiaccio = incavo * (0.6 + 0.4 * verso_polo) + 0.25 * verso_polo
+    ghiaccio = 100.0 * latitudine * np.clip(ghiaccio * (0.75 + 0.5 * rumore()), 0.0, 1.0)
+
+    sabbiosita[~validi] = np.nan
+    ghiaccio[~validi] = np.nan
+    return sabbiosita.astype("<f4"), ghiaccio.astype("<f4")
+
+
 # --------------------------------------------------------------------------
 # API
 # --------------------------------------------------------------------------
@@ -299,7 +350,8 @@ def api_terreno():
         name=t["nome"], lat=t["lat"], lon=t["lon"], n=PUNTI, side_km=LARGHEZZA_KM,
         relief_km=float(np.nanmax(z_km)), center_z_km=(t["quota_centro_m"] - quota_min) / 1000.0,
         center_elev_m=t["quota_centro_m"], z=b64(z_km),
-        slope=b64(t["pendenza"]), roughness=b64(t["roughness"]), grid_spacing_m=t["passo_m"],
+        slope=b64(t["pendenza"]), grid_spacing_m=t["passo_m"],
+        sandiness=b64(t["sabbiosita"]), ice=b64(t["ghiaccio"]),  # strati di esempio, non misure
     )
 
 
@@ -327,9 +379,10 @@ def prepara_strato(tipo, d, t, inizio, fine, passo):
     elif tipo == "sat":
         satellite = str(d.get("satellite") or "").strip().strip("\"'")
         if not satellite:
-            raise Errore("Inserire il nome o l'ID Horizons del satellite (es. -85 per LRO).")
+            raise Errore("Enter the satellite name or Horizons ID (e.g. -85 for LRO).")
+        satellite, id_horizons = sat_visibility.risolvi_satellite(satellite)
         tabella = effemeridi(
-            sat_visibility.get_lunar_ephemeris, satellite, lat, lon,
+            sat_visibility.get_lunar_ephemeris, id_horizons, lat, lon,
             t["quota_centro_m"] / 1000.0, inizio, fine, passo
         )
         extra = dict(satellite=satellite, range_km=[r[3] for r in tabella])
@@ -341,7 +394,7 @@ def prepara_strato(tipo, d, t, inizio, fine, passo):
                 *comuni, az, el, distanza_km, t["quota_centro_m"], t["distanze"]
             )
     else:
-        raise Errore("Strato sconosciuto.")
+        raise Errore("Unknown layer.")
 
     return tabella, fotogramma, extra
 
@@ -389,7 +442,7 @@ def api_punteggi():
     for kind in selezioni:
         tabella, fotogramma, _ = prepara_strato(kind, d, t, inizio, fine, passo)
         if serie and [r[0] for r in tabella] != [r[0] for r in serie[0]["tabella"]]:
-            raise Errore("Le effemeridi non condividono la stessa griglia temporale.")
+            raise Errore("The ephemerides do not share the same time grid.")
         serie.append(dict(kind=kind, tabella=tabella, fotogramma=fotogramma))
 
     times = serie[0]["tabella"]
@@ -404,7 +457,7 @@ def api_punteggi():
     ])
     durata_analizzata = float(durate.sum())
     if durata_finestra <= 0 or durata_analizzata <= 0:
-        raise Errore("La finestra selezionata non contiene intervalli temporali analizzabili.")
+        raise Errore("The selected window contains no time intervals to analyse.")
 
     validi = t["validi"]
     valid_count = int(np.count_nonzero(validi))
@@ -459,29 +512,37 @@ def api_punteggi():
 
     try:
         max_slope = float(d.get("max_slope", 15.0))
-        max_roughness = float(d.get("max_roughness", 20.0))
     except (TypeError, ValueError):
-        raise Errore("Le soglie di pendenza e rugosita' devono essere numeriche.")
+        raise Errore("The slope threshold must be a number.")
     if not math.isfinite(max_slope) or max_slope < 0 or max_slope > 90:
-        raise Errore("La pendenza massima deve essere compresa tra 0 e 90 gradi.")
-    if not math.isfinite(max_roughness) or max_roughness < 0:
-        raise Errore("La rugosita' massima deve essere un valore non negativo.")
+        raise Errore("The maximum slope must be between 0 and 90 degrees.")
 
-    terrain_valid = validi & np.isfinite(t["pendenza"]) & np.isfinite(t["roughness"])
+    terrain_valid = validi & np.isfinite(t["pendenza"])
     safety_count = int(np.count_nonzero(terrain_valid))
     if not safety_count:
-        raise Errore("Il DEM non contiene celle valide per stimare la sicurezza del terreno.")
-    safety_pct = 100.0 * float(np.count_nonzero(
-        terrain_valid & (t["pendenza"] <= max_slope) & (t["roughness"] <= max_roughness)
-    )) / safety_count
+        raise Errore("The DEM has no valid cells to estimate terrain safety.")
+    safety_pct = 100.0 * float(np.count_nonzero(terrain_valid & (t["pendenza"] <= max_slope))) / safety_count
+
+    def indice_esempio(strato):
+        """Media e copertura (celle >= 50) di uno strato DI ESEMPIO 0-100: non sono misure."""
+        celle = strato[validi & np.isfinite(strato)]
+        if not celle.size:
+            return dict(score=0.0, coverage_pct=0.0, peak=0.0, example=True)
+        return dict(
+            score=round(float(celle.mean()), 2),
+            coverage_pct=round(100.0 * float(np.mean(celle >= 50.0)), 2),
+            peak=round(float(celle.max()), 2), example=True,
+        )
+
     return jsonify(
+        soil=dict(sandiness=indice_esempio(t["sabbiosita"]), ice=indice_esempio(t["ghiaccio"])),
         site=t["nome"], satellite=satellite or None, sample_step=passo,
         window_hours=round(durata_finestra / 3600.0, 2), analyzed_hours=round(durata_analizzata / 3600.0, 2),
         valid_cells=valid_count,
         visibility={kind: riepilogo(accumuli[kind]) for kind in selezioni},
         simultaneous=riepilogo(contemporaneo),
         terrain_safety=dict(
-            score=round(safety_pct, 2), max_slope=max_slope, max_roughness=max_roughness,
+            score=round(safety_pct, 2), max_slope=max_slope,
             valid_cells=safety_count, grid_spacing_m=round(t["passo_m"], 2),
         ),
     )
@@ -494,7 +555,7 @@ def _traccia(fig, nome, colore, simbolo, tabella, az_or, el_or):
     az = np.array([r[1] % 360.0 for r in tabella])
     el = np.array([r[2] for r in tabella])
     sopra = el > np.interp(az, az_or, el_or, period=360.0)
-    testo = [f"{r[0]:%Y-%m-%d %H:%M} UTC<br>" + ("sopra" if s else "sotto") + " l'orizzonte locale"
+    testo = [f"{r[0]:%Y-%m-%d %H:%M} UTC<br>" + ("above" if s else "below") + " the local horizon"
              for r, s in zip(tabella, sopra)]
     # Interrompe la linea quando il corpo attraversa il nord (359 -> 0 gradi)
     x, y, t = [], [], []
@@ -508,7 +569,7 @@ def _traccia(fig, nome, colore, simbolo, tabella, az_or, el_or):
             name=nome, legendgroup=nome, showlegend=(s == 0.0),
             line=dict(color=colore, width=1.2, dash="dot"),
             marker=dict(size=7, color=colore, symbol=simbolo, line=dict(color="#05060a", width=0.5)),
-            hovertemplate=f"<b>{nome}</b><br>%{{text}}<br>Azimut %{{x:.1f}}°<br>Elevazione %{{y:.2f}}°<extra></extra>",
+            hovertemplate=f"<b>{nome}</b><br>%{{text}}<br>Azimuth %{{x:.1f}}°<br>Elevation %{{y:.2f}}°<extra></extra>",
         ))
     # Posizione all'istante iniziale, ben visibile
     for s in (-360.0, 0.0, 360.0):
@@ -533,12 +594,13 @@ def api_orizzonte():
 
     corpi, avvisi = [], []
     richieste = [
-        ("Sole", COLORI["sun"], "circle", ephemeris.get_lunar_ephemeris, "10"),
-        ("Terra", COLORI["earth"], "circle", earth_visibility.get_lunar_ephemeris, "399"),
+        ("Sun", COLORI["sun"], "circle", ephemeris.get_lunar_ephemeris, "10"),
+        ("Earth", COLORI["earth"], "circle", earth_visibility.get_lunar_ephemeris, "399"),
     ]
     satellite = str(d.get("satellite") or "").strip().strip("\"'")
     if satellite:
-        richieste.append((satellite, COLORI["sat"], "diamond", sat_visibility.get_lunar_ephemeris, satellite))
+        satellite, id_horizons = sat_visibility.risolvi_satellite(satellite)
+        richieste.append((satellite, COLORI["sat"], "diamond", sat_visibility.get_lunar_ephemeris, id_horizons))
     for etichetta, colore, simbolo, funzione, bersaglio in richieste:
         try:
             tabella = effemeridi(funzione, bersaglio, lat, lon, quota0 / 1000.0, inizio, fine, passo)
@@ -569,7 +631,7 @@ def api_streetview():
     sole = effemeridi(ephemeris.get_lunar_ephemeris, "10", lat, lon, 0, inizio, fine, passo)
     terra = effemeridi(earth_visibility.get_lunar_ephemeris, "399", lat, lon, 0, inizio, fine, passo)
     if [r[0] for r in sole] != [r[0] for r in terra]:
-        raise Errore("Le effemeridi non condividono la stessa griglia temporale.")
+        raise Errore("The ephemerides do not share the same time grid.")
     cielo = [[f"{s[0]:%Y-%m-%d %H:%M} UTC", s[1], s[2], e[1], e[2]] for s, e in zip(sole, terra)]
     with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8") as f:
         json.dump(cielo, f)
@@ -583,7 +645,7 @@ def api_streetview():
         os.unlink(f.name)
     if esito.returncode != 0:
         righe = (esito.stderr or esito.stdout).strip().splitlines()
-        raise Errore("Street view non generato: " + (righe[-1] if righe else "errore sconosciuto"))
+        raise Errore("Could not generate the street view: " + (righe[-1] if righe else "unknown error"))
     # Istante della linea del tempo del simulatore: la vista si apre su quello
     try:
         k = min(max(int(d.get("k")), 0), len(cielo) - 1)
@@ -595,10 +657,10 @@ def api_streetview():
 @app.get("/streetview/file/<slug>")
 def file_streetview(slug):
     if not re.fullmatch(r"[a-z0-9_]+", slug):
-        raise Errore("Sito non valido.")
+        raise Errore("Invalid site.")
     percorso = os.path.join(CARTELLA, f"streetview_{slug}.html")
     if not os.path.isfile(percorso):
-        raise Errore("Street view non ancora generato per questo sito.")
+        raise Errore("The street view has not been generated for this site yet.")
     return send_file(percorso, max_age=0)
 
 
@@ -606,7 +668,7 @@ def file_streetview(slug):
 # Pagine
 # --------------------------------------------------------------------------
 PAGINA_ATTESA_STREETVIEW = """<!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><title>Lunar Street View</title>
+<html lang="en"><head><meta charset="UTF-8"><title>Moon View · Explore</title>
 <style>body{margin:0;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
 gap:14px;background:#020617;color:#cbd5e1;font:14px ui-monospace,Menlo,monospace;text-align:center;padding:0 24px}
 .s{width:34px;height:34px;border:3px solid #334155;border-top-color:#818cf8;border-radius:50%;animation:r 1s linear infinite}
@@ -618,6 +680,15 @@ fetch('/api/streetview', {method: 'POST', headers: {'Content-Type': 'application
   .then(r => r.json()).then(j => { if (j.error) throw new Error(j.error); location.replace(j.url); })
   .catch(e => { document.getElementById('s').remove(); const m = document.getElementById('m'); m.className = 'e'; m.textContent = e.message; });
 </script></body></html>"""
+
+
+@app.get("/api/satellites")
+def api_satelliti():
+    """Catalogo di satellites_id.csv per il menu a tendina della pagina."""
+    return jsonify(satellites=[
+        dict(name=nome, id=id_horizons)
+        for nome, id_horizons in sat_visibility.carica_catalogo().items()
+    ])
 
 
 @app.get("/")
@@ -645,12 +716,12 @@ def plotly_js():
 
 
 if __name__ == "__main__":
-    p = argparse.ArgumentParser(description="Interfaccia web di Lunar Horizon Simulator.")
+    p = argparse.ArgumentParser(description="Moon View web interface.")
     p.add_argument("--port", type=int, default=5050)
-    p.add_argument("--no-browser", action="store_true", help="non aprire il browser all'avvio")
+    p.add_argument("--no-browser", action="store_true", help="do not open the browser at startup")
     a = p.parse_args()
     indirizzo = f"http://127.0.0.1:{a.port}"
-    print(f"Lunar Horizon Simulator: {indirizzo}")
+    print(f"Moon View: {indirizzo}")
     if not a.no_browser:
         import webbrowser
 

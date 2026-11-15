@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lunar Horizon Simulator</title>
+    <title>Moon View</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -66,7 +66,19 @@
             cursor: grabbing;
         }
 
-        /* Site 3D viewers (one per compared site) */
+        /* Split screen: smaller Sun / Earth / satellite banners and terrain-metric legend */
+        #site-grid.is-split [data-role="banners"] { top: 0.5rem; left: 0.5rem; gap: 0.25rem; }
+        #site-grid.is-split .site-banner { width: 8.5rem; padding: 0.25rem 0.5rem; border-radius: 0.5rem; }
+        #site-grid.is-split .site-banner [data-b="title"] { font-size: 8px; letter-spacing: 0; }
+        #site-grid.is-split .site-banner [data-b="value"] { font-size: 0.95rem; line-height: 1.2; }
+        #site-grid.is-split .site-banner [data-b="track"] { margin-top: 0.125rem; height: 2px; }
+        #site-grid.is-split .metric-legend { width: 10.5rem; padding: 0.375rem 0.5rem; border-radius: 0.5rem; }
+        #site-grid.is-split .metric-legend [data-metric-title] { font-size: 10px; }
+        #site-grid.is-split .metric-legend [data-metric-description] { margin-top: 0.125rem; font-size: 8px; line-height: 1.3; }
+        #site-grid.is-split .metric-legend [data-metric-gradient] { margin-top: 0.25rem; height: 0.3rem; }
+        #site-grid.is-split .metric-legend [data-metric-scale] { margin-top: 0.125rem; font-size: 8px; }
+
+        /* 3D Site viewers (one per compared site) */
         .site-canvas canvas {
             position: absolute;
             inset: 0;
@@ -103,7 +115,7 @@
                 </div>
                 <div>
                     <h1 class="text-sm sm:text-base font-bold tracking-tight text-white leading-none">
-                        Lunar Horizon Simulator
+                        Moon View
                     </h1>
                     <span class="text-[11px] font-mono text-slate-400">LOLA 118 m · JPL Horizons</span>
                 </div>
@@ -115,18 +127,23 @@
             <button id="tab-moon" type="button"
                 class="view-tab px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold bg-indigo-600 text-white shadow-sm transition-all flex items-center gap-2">
                 <span class="w-2 h-2 rounded-full bg-indigo-200"></span>
-                <span>Moon View</span>
+                <span>3D Moon</span>
             </button>
             <button id="tab-site" type="button"
                 class="view-tab px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-slate-200 transition-all flex items-center gap-2">
                 <span class="w-2 h-2 rounded-full bg-amber-400/70"></span>
-                <span class="hidden sm:inline">Site 3D View</span>
+                <span class="hidden sm:inline">3D Site</span>
                 <span class="sm:hidden">Site</span>
             </button>
             <button id="tab-scores" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="score-panel"
                 class="view-tab px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-slate-200 transition-all flex items-center gap-2">
                 <span class="w-2 h-2 rounded-full bg-violet-400/70"></span>
                 <span>Landing Score</span>
+            </button>
+            <button id="tab-leaderboard" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="leaderboard-panel"
+                class="view-tab px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-slate-200 transition-all flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-400/70"></span>
+                <span>LeaderBoard</span>
             </button>
         </nav>
     </header>
@@ -185,6 +202,7 @@
                                 <option value="site_10" data-lat="-20.4000" data-lon="129.1000">Tsiolkovskiy Crater</option>
                                 <option value="site_11" data-lat="-89.4500" data-lon="-137.3100">South Pole - Shackleton Ridge</option>
                                 <option value="site_12" data-lat="-85.9900" data-lon="-2.9300">South Pole - Malapert Massif</option>
+                                <option value="site_13" data-lat="0.67416" data-lon="23.47314">Apollo 11 - Tranquility Base</option>
                                 <option value="custom">Custom coordinates</option>
                             </select>
                             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
@@ -336,10 +354,10 @@
                         </summary>
                         <p class="mt-1 rounded-lg border border-amber-500/20 bg-slate-950/80 p-2 text-[11px] leading-relaxed text-slate-300">
                             Sunlight helps estimate solar-power availability and thermal conditions, both important for landers,
-                            instruments, and surface operations. The percentage shows how much of the analyzed area is illuminated
+                            instruments, and surface operations. 
+                            The percentage shows how much of the analyzed area is illuminated
                             at the selected time. Compare dates and times to identify operational windows; this value alone does not
                             describe daylight duration, terrain slope, or fine-scale local shadows.
-                            Example: <span class="font-mono text-amber-300">42.5%</span> of the area receives sunlight at this time.
                         </p>
                     </details>
                     <button type="button" data-layer="earth" aria-pressed="false"
@@ -358,12 +376,9 @@
                             Why this matters for site selection
                         </summary>
                         <p class="mt-1 rounded-lg border border-rose-500/20 bg-slate-950/80 p-2 text-[11px] leading-relaxed text-slate-300">
-                            Earth visibility helps assess opportunities for direct radio links to Earth and the observing geometry.
-                            Ridges and the local horizon can interrupt line of sight; the percentage indicates how much of the
-                            analyzed area can see at least part of Earth's disk at the selected time. For communications planning,
-                            also consider visibility windows and any relay-satellite network: this indicator alone does not guarantee
-                            coverage or link quality.
-                            Example: <span class="font-mono text-rose-300">68.0%</span> of the area can see Earth at this time.
+                            Earth visibility helps assessing opportunities for direct radio links to Earth and the Moon;
+                            Ridges and the local horizon can interrupt line of sight.
+                            The percentage indicates how much of the analyzed area can see part of Earth's disk at the selected time. 
                         </p>
                     </details>
                     <button type="button" data-layer="sat" aria-pressed="false"
@@ -376,9 +391,12 @@
                         </span>
                     </button>
                     <div class="pl-2">
-                        <label for="input-satellite" class="block text-[11px] text-slate-400 mb-1">Satellite (JPL Horizons name or ID)</label>
-                        <input type="text" id="input-satellite" value="-85" placeholder="e.g. -85 (LRO)" autocomplete="off" spellcheck="false"
-                            class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-sm font-mono text-white focus:outline-none focus:border-indigo-500">
+                        <label for="input-satellite" class="block text-[11px] text-slate-400 mb-1">Satellite</label>
+                        <!-- Options are loaded from satellites_id.csv through /api/satellites -->
+                        <select id="input-satellite"
+                            class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500 cursor-pointer">
+                            <option value="-85" selected>Lunar Reconnaissance Orbiter (-85)</option>
+                        </select>
                     </div>
                     <details class="group">
                         <summary aria-label="Information about satellite visibility"
@@ -387,11 +405,11 @@
                             Why this matters for site selection
                         </summary>
                         <p class="mt-1 rounded-lg border border-sky-500/20 bg-slate-950/80 p-2 text-[11px] leading-relaxed text-slate-300">
-                            Visibility of the selected satellite helps compare sites for relay communications, operational support,
+                            Visibility of the selected satellite helps comparing sites for relay communications, operational support,
                             or orbital observations. The percentage indicates how much of the analyzed area has an unobstructed line
-                            of sight to the satellite at the selected time. Consider the full timeline and the selected orbiter:
+                            of sight to the satellite at the selected time. 
+                            Consider the full timeline and the selected orbiter:
                             one favorable instant does not guarantee frequent passes or continuous communications.
-                            Example: <span class="font-mono text-sky-300">15.0%</span> of the area can see the selected satellite at this time.
                         </p>
                     </details>
                     <div class="space-y-2 pt-2 border-t border-slate-800/80">
@@ -418,21 +436,25 @@
                                 hazards smaller than their resolution.
                             </p>
                         </details>
-                        <button type="button" data-metric="roughness" aria-pressed="false"
+                        <button type="button" data-metric="sandiness" aria-pressed="false"
                             class="terrain-metric-toggle w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-left text-xs text-slate-200 hover:border-slate-500">
-                            Roughness
+                            Soil sandiness <span class="text-[10px] text-amber-300/80">· example</span>
+                        </button>
+                        <button type="button" data-metric="ice" aria-pressed="false"
+                            class="terrain-metric-toggle w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-left text-xs text-slate-200 hover:border-slate-500">
+                            Ice presence <span class="text-[10px] text-amber-300/80">· example</span>
                         </button>
                         <details class="group">
-                            <summary aria-label="Information about terrain roughness"
+                            <summary aria-label="Information about the example soil layers"
                                 class="inline-flex cursor-pointer list-none items-center gap-1.5 text-[10px] text-slate-400 hover:text-amber-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-400">
                                 <span aria-hidden="true" class="flex h-4 w-4 items-center justify-center rounded-full border border-slate-600 font-bold">i</span>
-                                Why this matters for site selection
+                                About these example layers
                             </summary>
                             <p class="mt-1 rounded-lg border border-amber-500/20 bg-slate-950/80 p-2 text-[11px] leading-relaxed text-slate-300">
-                                RMS roughness measures how much local elevations deviate from a plane fitted to neighboring samples.
-                                Higher values can indicate irregular terrain that may complicate lander touchdown and rover mobility.
-                                Here it is estimated over 3×3 LOLA-sample windows (about 1.25 km with the current grid): it does not
-                                describe small rocks, craters, or other fine-scale hazards, and is not a substitute for high-resolution imagery.
+                                These two layers are illustrative, not measurements. They are synthesised from the DEM to show how
+                                soil data would look on the mesh: sandiness is higher on flat, smooth ground (loose regolith) and
+                                lower on steep or rough ground (exposed rock); ice is placed in depressions and on pole-facing
+                                slopes, more strongly at high latitudes. Do not use them to choose a site.
                             </p>
                         </details>
                     </div>
@@ -472,6 +494,7 @@
                             <option value="site_10" data-lat="-20.4000" data-lon="129.1000">Tsiolkovskiy Crater</option>
                             <option value="site_11" data-lat="-89.4500" data-lon="-137.3100">South Pole - Shackleton Ridge</option>
                             <option value="site_12" data-lat="-85.9900" data-lon="-2.9300">South Pole - Malapert Massif</option>
+                            <option value="site_13" data-lat="0.67416" data-lon="23.47314">Apollo 11 - Tranquility Base</option>
                             <option value="custom">Custom coordinates</option>
                         </select>
                         <div class="grid grid-cols-2 gap-2.5">
@@ -503,7 +526,7 @@
             </div>
 
             <!-- =========================================================
-                 VIEW 1: MOON REPRESENTATION (Primary)
+                 VIEW 1: 3D MOON (Primary)
             ========================================================== -->
             <section id="view-moon" class="flex-1 p-4 lg:p-6 flex flex-col gap-4">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -555,7 +578,7 @@
             </section>
 
             <!-- =========================================================
-                 VIEW 2: SITE 3D VIEW (lunar.py terrain + overlays, 1 or 2 sites)
+                 VIEW 2: 3D SITE (lunar.py terrain + overlays, 1 or 2 sites)
             ========================================================== -->
             <section id="view-site" class="hidden flex-1 min-h-0 p-3 lg:p-4 flex flex-col gap-3">
                 <!-- One pane per site: B appears in split-screen comparison -->
@@ -613,19 +636,12 @@
                 <button id="score-close" type="button" aria-label="Close scores"
                     class="rounded-lg border border-slate-700 px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-800">Close</button>
             </div>
-            <div class="mt-4 grid gap-3 rounded-xl border border-slate-800 bg-slate-950/70 p-3 sm:grid-cols-2">
+            <div class="mt-4 rounded-xl border border-slate-800 bg-slate-950/70 p-3">
                 <label class="text-xs text-slate-300">Indicative maximum slope
                     <span class="mt-1 flex items-center gap-2">
                         <input id="score-max-slope" type="number" min="0" max="90" step="1" value="15"
                             class="w-24 rounded-lg border border-slate-700 bg-slate-900 px-2 py-1.5 font-mono text-white">
                         <span class="font-mono text-slate-500">degrees</span>
-                    </span>
-                </label>
-                <label class="text-xs text-slate-300">Indicative maximum RMS roughness
-                    <span class="mt-1 flex items-center gap-2">
-                        <input id="score-max-roughness" type="number" min="0" step="1" value="20"
-                            class="w-24 rounded-lg border border-slate-700 bg-slate-900 px-2 py-1.5 font-mono text-white">
-                        <span class="font-mono text-slate-500">meters</span>
                     </span>
                 </label>
             </div>
@@ -635,10 +651,82 @@
                 The time resolution is the selected time step.
             </p>
             <p class="mt-1 text-[10px] leading-relaxed text-slate-500">
-                Terrain safety is the percentage of cells whose slope and roughness are below the chosen thresholds: a preliminary indicator at LOLA resolution, not a safety certification.
+                Terrain safety is the percentage of cells whose slope is below the chosen threshold: a preliminary indicator at LOLA resolution, not a safety certification.
+            </p>
+            <p class="mt-1 text-[10px] leading-relaxed text-slate-500">
+                Soil sandiness and ice presence are <span class="text-amber-300/90">fictitious example parameters</span> (mean 0–100 index of the example layers over the valid cells), not measurements.
             </p>
             <p id="score-status" class="mt-4 text-sm text-slate-300" role="status" aria-live="polite"></p>
             <div id="score-results" class="mt-3 grid gap-4 lg:grid-cols-2"></div>
+        </div>
+    </section>
+
+    <section id="leaderboard-panel" class="hidden fixed inset-0 z-[60] items-center justify-center bg-slate-950/75 p-4 backdrop-blur-sm"
+        role="dialog" aria-modal="true" aria-labelledby="leaderboard-title">
+        <div class="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 p-4 shadow-2xl sm:p-6">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <h2 id="leaderboard-title" class="text-lg font-bold text-white">LeaderBoard</h2>
+                    <p class="mt-1 text-xs text-slate-400">Player scores per landing site: every run has its own observation period. Filter by score, by site and by any time window.</p>
+                </div>
+                <button id="leaderboard-close" type="button" aria-label="Close leaderboard"
+                    class="rounded-lg border border-slate-700 px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-800">Close</button>
+            </div>
+            <p class="mt-2 text-[10px] leading-relaxed text-amber-300/90">
+                Demo data: players and scores are fictitious and generated in the page, they are not computed from the DEM or the ephemerides.
+                Overall = mean of the visibility and terrain-safety scores; soil sandiness and ice presence are example scores kept out of it.
+            </p>
+            <div class="mt-4 grid gap-3 rounded-xl border border-slate-800 bg-slate-950/70 p-3 sm:grid-cols-2 lg:grid-cols-3">
+                <label class="text-xs text-slate-300">Score
+                    <select id="leaderboard-metric"
+                        class="mt-1 block w-full rounded-lg border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-white"></select>
+                </label>
+                <label class="text-xs text-slate-300">Site
+                    <select id="leaderboard-site"
+                        class="mt-1 block w-full rounded-lg border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-white"></select>
+                </label>
+                <label class="text-xs text-slate-300">Order
+                    <select id="leaderboard-order"
+                        class="mt-1 block w-full rounded-lg border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-white">
+                        <option value="desc" selected>Highest first</option>
+                        <option value="asc">Lowest first</option>
+                    </select>
+                </label>
+                <label class="text-xs text-slate-300">Observation from <span class="text-slate-500">(empty = any)</span>
+                    <input id="leaderboard-from" type="date"
+                        class="mt-1 block w-full rounded-lg border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-white [color-scheme:dark]">
+                </label>
+                <label class="text-xs text-slate-300">Observation to <span class="text-slate-500">(empty = any)</span>
+                    <input id="leaderboard-to" type="date"
+                        class="mt-1 block w-full rounded-lg border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-white [color-scheme:dark]">
+                </label>
+                <div class="flex items-end">
+                    <button id="leaderboard-anytime" type="button"
+                        class="w-full rounded-lg border border-slate-700 px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-800 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent">Any time</button>
+                </div>
+            </div>
+            <p id="leaderboard-note" class="mt-2 text-[10px] leading-relaxed text-slate-400" role="status" aria-live="polite"></p>
+            <div id="leaderboard-top" class="mt-4 rounded-2xl border border-amber-400/40 bg-amber-400/5 p-4">
+                <div id="leaderboard-top-label" class="text-[10px] font-semibold uppercase tracking-wider text-amber-300"></div>
+                <div class="mt-1 flex flex-wrap items-center gap-x-5 gap-y-1">
+                    <span id="leaderboard-top-score" class="font-mono text-4xl font-bold text-amber-300"></span>
+                    <div class="min-w-0">
+                        <div id="leaderboard-top-player" class="truncate text-lg font-bold text-white"></div>
+                        <div id="leaderboard-top-site" class="truncate text-sm text-slate-300"></div>
+                        <div id="leaderboard-top-period" class="truncate text-[10px] text-slate-400"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 grid gap-4 lg:grid-cols-2">
+                <article class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+                    <h3 id="leaderboard-sites-title" class="mb-3 text-sm font-bold text-white">Site ranking</h3>
+                    <div id="leaderboard-sites" class="space-y-1.5"></div>
+                </article>
+                <article class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+                    <h3 id="leaderboard-players-title" class="mb-3 text-sm font-bold text-white">Player ranking</h3>
+                    <div id="leaderboard-players" class="space-y-1.5"></div>
+                </article>
+            </div>
         </div>
     </section>
 
@@ -661,7 +749,6 @@
             const scoreResults = document.getElementById('score-results');
             const scoreClose = document.getElementById('score-close');
             const scoreMaxSlope = document.getElementById('score-max-slope');
-            const scoreMaxRoughness = document.getElementById('score-max-roughness');
 
             // Input & Telemetry references
             const selectLandingSite = document.getElementById('select-landing-site');
@@ -995,7 +1082,7 @@
             }
 
             // -------------------------------------------------------------
-            // 2. SITE 3D VIEWER (terrain of lunar.py + Sun / Earth / satellite overlays)
+            // 2. 3D SITE VIEWER (terrain of lunar.py + Sun / Earth / satellite overlays)
             // -------------------------------------------------------------
             const LAYERS = {
                 sun: { label: 'Sun', color: '#ffd60a', what: 'lit', banner: 'Surface illuminated' },
@@ -1009,13 +1096,19 @@
             const TERRAIN_METRICS = {
                 slope: {
                     label: 'Slope', unit: '°', max: 30,
-                    description: 'Pendenza locale dalla derivata del DEM; valori oltre 30° saturano il colore.',
+                    description: 'Local slope from the DEM derivative; values above 30° saturate the colour.',
                     colors: ['#1d4ed8', '#22c55e', '#facc15', '#dc2626']
                 },
-                roughness: {
-                    label: 'Roughness', unit: 'm', max: 100,
-                    description: 'RMS dei residui dal piano locale su 3×3 campioni; oltre 100 m il colore satura.',
-                    colors: ['#0f766e', '#22d3ee', '#a78bfa', '#f43f5e']
+                // Example layers synthesised by server.py (strati_esempio): not measurements
+                sandiness: {
+                    label: 'Soil sandiness (example)', unit: '%', max: 100,
+                    description: 'Illustrative index, not a measurement: loose regolith on flat, smooth ground; exposed rock on steep or rough ground.',
+                    colors: ['#44403c', '#92400e', '#d97706', '#fde68a']
+                },
+                ice: {
+                    label: 'Ice presence (example)', unit: '%', max: 100,
+                    description: 'Illustrative index, not a measurement: depressions and pole-facing slopes, stronger at high latitudes.',
+                    colors: ['#0f172a', '#1e3a8a', '#38bdf8', '#f0f9ff']
                 }
             };
             const SUN_RGB = [0xff / 255, 0xd6 / 255, 0x0a / 255];
@@ -1226,7 +1319,7 @@
                 const banners = {};
                 Object.entries(LAYERS).forEach(([kind, layer]) => {
                     const box = document.createElement('div');
-                    box.className = 'hidden w-52 px-3 py-2 rounded-xl bg-slate-900/85 backdrop-blur-md border border-slate-700/80 shadow-lg';
+                    box.className = 'site-banner hidden w-52 px-3 py-2 rounded-xl bg-slate-900/85 backdrop-blur-md border border-slate-700/80 shadow-lg';
                     box.setAttribute('role', 'status');
                     box.setAttribute('aria-live', 'polite');
                     box.setAttribute('aria-atomic', 'true');
@@ -1234,7 +1327,7 @@
                     box.innerHTML = `
                         <p data-b="title" class="text-[10px] font-mono uppercase tracking-wide text-slate-400 truncate"></p>
                         <p data-b="value" class="text-2xl font-mono font-bold leading-tight" style="color:${layer.color}"></p>
-                        <div class="mt-1 h-1 rounded-full bg-slate-800 overflow-hidden">
+                        <div data-b="track" class="mt-1 h-1 rounded-full bg-slate-800 overflow-hidden">
                             <div data-b="bar" class="h-full rounded-full" style="background:${layer.color};width:0%"></div>
                         </div>`;
                     el('banners').appendChild(box);
@@ -1242,13 +1335,13 @@
                     banners[kind] = { box, title: part('title'), value: part('value'), bar: part('bar') };
                 });
                 const metricLegend = document.createElement('div');
-                metricLegend.className = 'hidden w-64 rounded-xl border border-slate-700/80 bg-slate-900/90 p-3 text-slate-200 shadow-lg backdrop-blur-md';
+                metricLegend.className = 'metric-legend hidden w-64 rounded-xl border border-slate-700/80 bg-slate-900/90 p-3 text-slate-200 shadow-lg backdrop-blur-md';
                 metricLegend.setAttribute('role', 'status');
                 metricLegend.innerHTML = `
                     <p data-metric-title class="text-xs font-semibold"></p>
                     <p data-metric-description class="mt-1 text-[10px] leading-relaxed text-slate-400"></p>
                     <div data-metric-gradient class="mt-2 h-2 rounded-full"></div>
-                    <div class="mt-1 flex justify-between font-mono text-[9px] text-slate-400">
+                    <div data-metric-scale class="mt-1 flex justify-between font-mono text-[9px] text-slate-400">
                         <span>0</span><span data-metric-max></span>
                     </div>`;
                 el('banners').appendChild(metricLegend);
@@ -1294,14 +1387,13 @@
                 viewer.setTerrain = async (terrain) => {
                     heights = new Float32Array(await decodeBase64(terrain.z));
                     n = terrain.n;
-                    const [slope, roughness] = await Promise.all([
-                        decodeBase64(terrain.slope).then(buffer => new Float32Array(buffer)),
-                        decodeBase64(terrain.roughness).then(buffer => new Float32Array(buffer))
-                    ]);
-                    if (slope.length !== n * n || roughness.length !== n * n) {
+                    const names = Object.keys(TERRAIN_METRICS);
+                    const grids = await Promise.all(names.map(name =>
+                        decodeBase64(terrain[name]).then(buffer => new Float32Array(buffer))));
+                    if (grids.some(grid => grid.length !== n * n)) {
                         throw new Error('Terrain analysis data does not match the terrain grid.');
                     }
-                    terrainMetrics = { slope, roughness };
+                    terrainMetrics = Object.fromEntries(names.map((name, k) => [name, grids[k]]));
                     unitsPerKm = 2 / terrain.side_km;
                     viewer.terrain = terrain;
 
@@ -1349,7 +1441,7 @@
 
                     el('title').textContent = terrain.name;
                     el('subtitle').textContent =
-                        `Lat ${terrain.lat.toFixed(4)}°, Lon ${terrain.lon.toFixed(4)}° · elev ${terrain.center_elev_m.toFixed(0)} m · relief ${terrain.relief_km.toFixed(2)} km · ${terrain.side_km.toFixed(0)} km box`;
+                        `Lat ${terrain.lat.toFixed(4)}°, Lon ${terrain.lon.toFixed(4)}° · elev ${terrain.center_elev_m.toFixed(0)} m · ${terrain.side_km.toFixed(0)} km box`;
                     el('streetview').disabled = false;
                     el('horizon').disabled = false;
                     overlay.visible = true;
@@ -1376,9 +1468,9 @@
                     const metric = state.terrainMetric && TERRAIN_METRICS[state.terrainMetric];
                     metricLegend.classList.toggle('hidden', !metric || !terrainMetrics);
                     if (metric && terrainMetrics) {
-                        metricLegendTitle.textContent = `${metric.label} · scala 0–${metric.max} ${metric.unit}`;
+                        metricLegendTitle.textContent = `${metric.label} · scale 0–${metric.max} ${metric.unit}`;
                         metricLegendDescription.textContent =
-                            `${metric.description} Passo griglia: ${viewer.terrain.grid_spacing_m.toFixed(0)} m.`;
+                            `${metric.description} Grid spacing: ${viewer.terrain.grid_spacing_m.toFixed(0)} m.`;
                         metricLegendGradient.style.background =
                             `linear-gradient(to right, ${metric.colors.join(', ')})`;
                         metricLegendMax.textContent = `${metric.max} ${metric.unit}`;
@@ -1638,8 +1730,10 @@
 
                 const detail = document.createElement('p');
                 detail.className = 'mt-2 text-[10px] leading-relaxed text-slate-400';
-                detail.textContent = terrain
-                    ? `${result.score.toFixed(1)}% of cells below ${result.max_slope}° and ${result.max_roughness} m RMS (indicative thresholds).`
+                detail.textContent = result.example
+                    ? `Mean index ${result.score.toFixed(1)} / 100 · ${result.coverage_pct.toFixed(1)}% of cells with index ≥ 50 · peak ${result.peak.toFixed(0)} · fictitious example layer, not a measurement.`
+                    : terrain
+                    ? `${result.score.toFixed(1)}% of cells below ${result.max_slope}° of slope (indicative threshold).`
                     : `${result.availability_pct.toFixed(1)}% of the time available · mean longest continuous visibility ${result.mean_longest_visibility_h.toFixed(1)} h · mean longest blackout ${result.mean_max_blackout_h.toFixed(1)} h · score 75/25`;
                 row.appendChild(detail);
                 parent.appendChild(row);
@@ -1667,6 +1761,10 @@
                 }
                 addScoreRow(card, 'Simultaneous visibility', result.simultaneous);
                 addScoreRow(card, 'Terrain safety', result.terrain_safety, true);
+                if (result.soil) {
+                    addScoreRow(card, 'Soil sandiness (example)', result.soil.sandiness);
+                    addScoreRow(card, 'Ice presence (example)', result.soil.ice);
+                }
                 const note = document.createElement('p');
                 note.className = 'mt-3 text-[10px] text-slate-500';
                 note.textContent = `${result.window_hours.toFixed(1)} h analyzed · sample step ${result.sample_step} · ${result.terrain_safety.valid_cells} terrain cells · ${result.terrain_safety.grid_spacing_m} m grid`;
@@ -1699,7 +1797,6 @@
                             return await api('/api/scores', {
                                 lat: site.lat, lon: site.lon, satellite: state.satellite,
                                 max_slope: Number(scoreMaxSlope.value),
-                                max_roughness: Number(scoreMaxRoughness.value),
                                 ...state.params
                             });
                         } catch (error) {
@@ -1739,9 +1836,280 @@
                 openScorePanel();
                 scoreClose.focus();
             });
-            [scoreMaxSlope, scoreMaxRoughness].forEach(input => input.addEventListener('change', () => {
+            [scoreMaxSlope].forEach(input => input.addEventListener('change', () => {
                 if (!scorePanel.classList.contains('hidden')) openScorePanel();
             }));
+
+            // -------------------------------------------------------------
+            // LEADERBOARD (fictitious demo data, generated deterministically in the page)
+            // -------------------------------------------------------------
+            const tabLeaderboard = document.getElementById('tab-leaderboard');
+            const leaderboardPanel = document.getElementById('leaderboard-panel');
+            const leaderboardClose = document.getElementById('leaderboard-close');
+            const leaderboardMetric = document.getElementById('leaderboard-metric');
+            const leaderboardFrom = document.getElementById('leaderboard-from');
+            const leaderboardTo = document.getElementById('leaderboard-to');
+            const leaderboardAnytime = document.getElementById('leaderboard-anytime');
+            const leaderboardNote = document.getElementById('leaderboard-note');
+            const leaderboardSite = document.getElementById('leaderboard-site');
+            const leaderboardOrder = document.getElementById('leaderboard-order');
+            const leaderboardSites = document.getElementById('leaderboard-sites');
+            const leaderboardPlayers = document.getElementById('leaderboard-players');
+
+            const LEADERBOARD_METRICS = [
+                ['overall', 'Overall (visibility + terrain)'],
+                ['sun', 'Light visibility'],
+                ['earth', 'Earth visibility'],
+                ['sat', 'Satellite visibility'],
+                ['simultaneous', 'Simultaneous visibility'],
+                ['terrain', 'Terrain safety'],
+                ['sandiness', 'Soil sandiness (example, not in overall)'],
+                ['ice', 'Ice presence (example, not in overall)'],
+            ];
+            // Scores that enter the overall; sandiness and ice are example scores kept out of it
+            const LEADERBOARD_OVERALL = ['sun', 'earth', 'sat', 'simultaneous', 'terrain'];
+            // Scores that depend only on the DEM: identical in every time window
+            const LEADERBOARD_STATIC = ['terrain', 'sandiness', 'ice'];
+            // Every run observes the site for one of these durations (days), starting on a day of this year
+            const LEADERBOARD_DURATIONS = [1, 3, 7, 14, 30];
+            const LEADERBOARD_YEAR = 2026;
+            const DAY_MS = 86400000;
+            // Approximate new Moon and synodic month: enough to place each run in the lunar day or night
+            const LEADERBOARD_NEW_MOON = Date.UTC(2026, 0, 18, 19, 52);
+            const SYNODIC_DAYS = 29.530588;
+            const LEADERBOARD_PLAYERS = [
+                'RegolithRider', 'LunaFox', 'CraterHopper', 'MareNomad', 'TychoTiger', 'SeleneScout',
+                'DustDevil42', 'ApolloKid', 'ShackletonSam', 'OrbitOwl', 'TerminatorTess', 'RilleRunner',
+                'BasaltBaron', 'EarthshineEve', 'HighlandHawk', 'PerigeePat',
+            ];
+
+            const leaderboardData = (() => {
+                let seed = 20261115;   // fixed seed: the same table at every load
+                const random = () => {
+                    seed = (seed + 0x6D2B79F5) | 0;
+                    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+                    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+                    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+                };
+                const between = (low, high) => low + (high - low) * random();
+                const clamp = value => Math.max(0, Math.min(100, value));
+
+                const sites = [...selectLandingSite.options].filter(o => o.value !== 'custom').map(o => {
+                    const lon = parseFloat(o.dataset.lon);
+                    const lat = Math.abs(parseFloat(o.dataset.lat)) / 90;
+                    const polar = lat >= 0.9;
+                    const farSide = !polar && Math.abs(lon) > 95;   // at the poles longitude says little
+                    return {
+                        id: o.value, name: o.textContent.trim(), lon, polar, farSide,
+                        sun: clamp(82 - 30 * lat * lat + between(-8, 8)),
+                        earth: farSide ? between(0, 4) : clamp(93 - 35 * lat ** 4 + between(-8, 5)),
+                        sat: between(28, 62),
+                        terrain: between(42, 93),
+                        sandiness: between(25, 78),
+                        ice: clamp(88 * lat ** 3 + between(0, 9)),
+                    };
+                });
+
+                // Fraction of the period [start, end) in which the Sun is above the site's meridian horizon
+                const dayFraction = (site, start, end) => {
+                    const samples = 96;
+                    let lit = 0;
+                    for (let i = 0; i < samples; i++) {
+                        const t = start + (end - start) * (i + 0.5) / samples;
+                        const subsolarLon = 180 - 360 * (t - LEADERBOARD_NEW_MOON) / (SYNODIC_DAYS * DAY_MS);
+                        if (Math.cos((site.lon - subsolarLon) * Math.PI / 180) > 0) lit++;
+                    }
+                    return lit / samples;
+                };
+
+                const yearStart = Date.UTC(LEADERBOARD_YEAR, 0, 1);
+                const yearDays = (Date.UTC(LEADERBOARD_YEAR + 1, 0, 1) - yearStart) / DAY_MS;
+                const metricKeys = LEADERBOARD_METRICS.map(([key]) => key).filter(key => key !== 'overall');
+                const runs = [];
+                sites.forEach(site => {
+                    // Several players on the same site, each with its own observation period
+                    const count = 9 + Math.floor(random() * 6);
+                    for (let k = 0; k < count; k++) {
+                        const player = LEADERBOARD_PLAYERS[Math.floor(random() * LEADERBOARD_PLAYERS.length)];
+                        const days = LEADERBOARD_DURATIONS[Math.floor(random() * LEADERBOARD_DURATIONS.length)];
+                        const start = yearStart + Math.floor(random() * (yearDays - days + 1)) * DAY_MS;
+                        const end = start + days * DAY_MS;
+                        // A short period can fall entirely in the lunar day or night, so its light score
+                        // swings a lot; a full lunation averages out. At the poles the Sun grazes the horizon
+                        const sun = site.polar
+                            ? site.sun + between(-10, 10)
+                            : site.sun + 90 * (dayFraction(site, start, end) - 0.5);
+                        // The Earth barely moves in the lunar sky: only libration changes it
+                        const earth = site.farSide ? site.earth : site.earth + between(-3, 3);
+                        const sat = site.sat + 16 / Math.sqrt(days) * between(-1, 1);
+                        const visibility = { sun: clamp(sun), earth: clamp(earth), sat: clamp(sat) };
+                        visibility.simultaneous = Math.min(visibility.sun, visibility.earth, visibility.sat) * between(0.7, 0.9);
+                        const scores = {};
+                        metricKeys.forEach(key => {
+                            const base = key in visibility ? visibility[key] : site[key];
+                            scores[key] = clamp(base + between(-12, 7));   // player skill/luck on this run
+                        });
+                        scores.overall = LEADERBOARD_OVERALL.reduce((sum, key) => sum + scores[key], 0)
+                            / LEADERBOARD_OVERALL.length;
+                        runs.push({ player, site, start, end, days, scores });
+                    }
+                });
+                return { sites, runs, min: yearStart, max: yearStart + (yearDays - 1) * DAY_MS };
+            })();
+
+            LEADERBOARD_METRICS.forEach(([value, label]) => leaderboardMetric.add(new Option(label, value)));
+            const isoDay = ms => new Date(ms).toISOString().slice(0, 10);
+            [leaderboardFrom, leaderboardTo].forEach(input => {
+                input.min = isoDay(leaderboardData.min);
+                input.max = isoDay(leaderboardData.max);
+            });
+            const leaderboardDate = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+            // Observation period of a run, with the last day included
+            function leaderboardPeriod(run) {
+                if (run.days === 1) return `${leaderboardDate.format(run.start)} (24 h)`;
+                return `${leaderboardDate.format(run.start)} – ${leaderboardDate.format(run.end - DAY_MS)} (${run.days} d)`;
+            }
+            leaderboardSite.add(new Option('All sites', 'all'));
+            leaderboardData.sites.forEach(site => leaderboardSite.add(new Option(site.name, site.id)));
+
+            function leaderboardRow(rank, title, subtitle, score, highlighted) {
+                const row = document.createElement('div');
+                row.className = 'rounded-xl border p-2.5 ' + (highlighted
+                    ? 'border-emerald-500/60 bg-emerald-500/10' : 'border-slate-800 bg-slate-950/70');
+                const line = document.createElement('div');
+                line.className = 'flex items-center gap-3';
+                const position = document.createElement('span');
+                position.className = 'w-7 shrink-0 text-center font-mono text-sm font-bold '
+                    + (['text-amber-300', 'text-slate-300', 'text-orange-400'][rank - 1] || 'text-slate-500');
+                position.textContent = rank;
+                const text = document.createElement('div');
+                text.className = 'min-w-0 flex-1';
+                const name = document.createElement('div');
+                name.className = 'truncate text-xs font-semibold text-slate-200';
+                name.textContent = title;
+                const info = document.createElement('div');
+                info.className = 'truncate text-[10px] text-slate-400';
+                info.textContent = subtitle;
+                text.append(name, info);
+                const value = document.createElement('span');
+                value.className = 'shrink-0 font-mono text-sm font-bold text-emerald-300';
+                value.textContent = score.toFixed(1);
+                line.append(position, text, value);
+                const progress = document.createElement('div');
+                progress.className = 'mt-2 h-1 overflow-hidden rounded-full bg-slate-800';
+                const bar = document.createElement('div');
+                bar.className = 'h-full rounded-full bg-emerald-400';
+                bar.style.width = `${Math.max(0, Math.min(score, 100))}%`;
+                progress.appendChild(bar);
+                row.append(line, progress);
+                return row;
+            }
+
+            function renderLeaderboard() {
+                const metric = leaderboardMetric.value;
+                const metricLabel = leaderboardMetric.options[leaderboardMetric.selectedIndex].textContent;
+                const siteId = leaderboardSite.value;
+                const siteLabel = siteId === 'all' ? 'all sites' : leaderboardSite.options[leaderboardSite.selectedIndex].textContent;
+                const direction = leaderboardOrder.value === 'asc' ? 1 : -1;
+                const byScore = (a, b) => direction * (a.score - b.score);
+                const scoreOf = run => run.scores[metric];
+                const isStatic = LEADERBOARD_STATIC.includes(metric);
+
+                // Time window: an empty bound means "any"; a run counts when its whole observation
+                // period lies inside the window (both days included)
+                const from = leaderboardFrom.value ? Date.parse(leaderboardFrom.value) : -Infinity;
+                const to = leaderboardTo.value ? Date.parse(leaderboardTo.value) + DAY_MS : Infinity;
+                const anyTime = !leaderboardFrom.value && !leaderboardTo.value;
+                leaderboardAnytime.disabled = anyTime;
+                const invalid = from >= to;
+                const windowLabel = anyTime ? 'any time'
+                    : !leaderboardTo.value ? `from ${leaderboardDate.format(from)}`
+                        : !leaderboardFrom.value ? `until ${leaderboardDate.format(to - DAY_MS)}`
+                            : `${leaderboardDate.format(from)} – ${leaderboardDate.format(to - DAY_MS)}`;
+                const inWindow = invalid ? [] : leaderboardData.runs.filter(run => run.start >= from && run.end <= to);
+                const selected = inWindow.filter(run => siteId === 'all' || run.site.id === siteId);
+
+                leaderboardNote.textContent = invalid
+                    ? 'The start of the time window is after its end.'
+                    : (anyTime ? 'Showing every run. ' : 'Showing the runs whose observation period lies entirely inside the time window. ')
+                        + (isStatic
+                            ? 'This score depends only on the terrain, not on the observation period: differences come from the players.'
+                            : metric === 'overall'
+                                ? 'Overall changes with the observation period through its visibility scores; sandiness and ice are not included.'
+                                : 'Visibility scores change with the observation period: short periods swing more between lunar day and night.');
+
+                const empty = text => {
+                    const message = document.createElement('p');
+                    message.className = 'text-xs text-slate-400';
+                    message.textContent = text;
+                    return message;
+                };
+                const context = `${metricLabel} · ${windowLabel}`;
+
+                // Highest score among the filtered runs: score, player and, below, the site
+                const top = selected.reduce((a, b) => (!a || scoreOf(b) > scoreOf(a) ? b : a), null);
+                document.getElementById('leaderboard-top-label').textContent = `Highest score · ${context} · ${siteLabel}`;
+                document.getElementById('leaderboard-top-score').textContent = top ? scoreOf(top).toFixed(1) : '–';
+                document.getElementById('leaderboard-top-player').textContent = top ? top.player : 'No runs match the filters';
+                document.getElementById('leaderboard-top-site').textContent = top ? top.site.name : '';
+                document.getElementById('leaderboard-top-period').textContent = top ? `observed ${leaderboardPeriod(top)}` : '';
+
+                // Site ranking: each site by the best score obtained on it in the window
+                const siteRanking = leaderboardData.sites
+                    .filter(site => siteId === 'all' || site.id === siteId)
+                    .map(site => {
+                        const runs = selected.filter(run => run.site === site);
+                        if (!runs.length) return null;
+                        const best = runs.reduce((a, b) => (scoreOf(b) > scoreOf(a) ? b : a));
+                        const mean = runs.reduce((sum, run) => sum + scoreOf(run), 0) / runs.length;
+                        return { site, runs: runs.length, best, mean, score: scoreOf(best) };
+                    }).filter(Boolean).sort(byScore);
+                document.getElementById('leaderboard-sites-title').textContent = `Site ranking (best score) · ${context}`;
+                leaderboardSites.replaceChildren(...(siteRanking.length ? siteRanking.map((entry, index) => leaderboardRow(
+                    index + 1, entry.site.name,
+                    `best by ${entry.best.player} · ${entry.runs} run${entry.runs === 1 ? '' : 's'}, mean ${entry.mean.toFixed(1)}`,
+                    entry.score, false
+                )) : [empty('No runs match the filters.')]));
+
+                // Player ranking: one row per run, so the same site appears with different
+                // scores depending on who observed it and when
+                const playerRanking = selected.map(run => ({ run, score: scoreOf(run) })).sort(byScore).slice(0, 15);
+                document.getElementById('leaderboard-players-title').textContent = `Player ranking · ${context} · ${siteLabel}`;
+                leaderboardPlayers.replaceChildren(...(playerRanking.length ? playerRanking.map((entry, index) => leaderboardRow(
+                    index + 1, entry.run.player,
+                    `${siteId === 'all' ? entry.run.site.name + ' · ' : ''}${leaderboardPeriod(entry.run)}`,
+                    entry.score, entry.run === top
+                )) : [empty('No runs match the filters.')]));
+            }
+
+            function setLeaderboardOpen(open) {
+                if (open && !scorePanel.classList.contains('hidden')) closeScorePanel();
+                leaderboardPanel.classList.toggle('hidden', !open);
+                leaderboardPanel.classList.toggle('flex', open);
+                tabLeaderboard.setAttribute('aria-expanded', String(open));
+                setTabActive(tabLeaderboard, open);
+                if (open) {
+                    renderLeaderboard();
+                    leaderboardClose.focus();
+                }
+            }
+
+            tabLeaderboard.addEventListener('click', () => setLeaderboardOpen(true));
+            leaderboardClose.addEventListener('click', () => setLeaderboardOpen(false));
+            leaderboardPanel.addEventListener('click', event => {
+                if (event.target === leaderboardPanel) setLeaderboardOpen(false);
+            });
+            document.addEventListener('keydown', event => {
+                if (event.key === 'Escape' && !leaderboardPanel.classList.contains('hidden')) setLeaderboardOpen(false);
+            });
+            [leaderboardMetric, leaderboardFrom, leaderboardTo, leaderboardSite, leaderboardOrder].forEach(control => {
+                control.addEventListener('change', renderLeaderboard);
+            });
+            leaderboardAnytime.addEventListener('click', () => {
+                leaderboardFrom.value = '';
+                leaderboardTo.value = '';
+                renderLeaderboard();
+            });
 
             async function loadSite(slot) {
                 const viewer = viewers[slot];
@@ -1812,6 +2180,22 @@
                 });
             });
 
+            // Fill the satellite menu from satellites_id.csv; the built-in LRO option stays if this fails
+            fetch(API + '/api/satellites')
+                .then(response => response.json())
+                .then(({ satellites }) => {
+                    if (!satellites || !satellites.length) return;
+                    const current = inputSatellite.value;
+                    inputSatellite.replaceChildren(...satellites.map(sat => {
+                        const option = document.createElement('option');
+                        option.value = sat.id;
+                        option.textContent = `${sat.name} (${sat.id})`;
+                        return option;
+                    }));
+                    inputSatellite.value = satellites.some(sat => sat.id === current) ? current : satellites[0].id;
+                })
+                .catch(() => {});
+
             // A different satellite invalidates only the satellite layer
             inputSatellite.addEventListener('change', () => {
                 state.satellite = inputSatellite.value.trim();
@@ -1821,7 +2205,7 @@
             });
 
             // -------------------------------------------------------------
-            // 5. Switch between Moon View and Site 3D View
+            // 5. Switch between 3D Moon and 3D Site
             // -------------------------------------------------------------
             function setTabActive(tab, active) {
                 tab.classList.toggle('bg-indigo-600', active);
@@ -1942,6 +2326,10 @@
                     syncTelemetry(true, focusGlobe);
                 });
                 [latInput, lonInput].forEach(inp => inp.addEventListener('input', () => {
+                    // Hard limit: a value beyond min/max is pulled back to the limit while typing
+                    const value = parseFloat(inp.value), min = parseFloat(inp.min), max = parseFloat(inp.max);
+                    if (!isNaN(value) && value < min) inp.value = min;
+                    else if (!isNaN(value) && value > max) inp.value = max;
                     select.value = 'custom';
                     syncTelemetry(false, false);
                 }));
@@ -1977,6 +2365,7 @@
                 document.getElementById('compare-site-b-panel').classList.toggle('hidden', !state.compare);
                 viewers.b.pane.classList.toggle('hidden', !state.compare);
                 siteGrid.classList.toggle('grid-cols-2', state.compare);
+                siteGrid.classList.toggle('is-split', state.compare);
                 siteGrid.classList.toggle('grid-cols-1', !state.compare);
                 syncTelemetry(false, false);
                 // Site B is loaded straight away when the 3D view is already open

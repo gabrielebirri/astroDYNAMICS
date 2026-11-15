@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lunar Horizon 2D</title>
+    <title>Moon View · 2D Horizon</title>
     <!-- Opened by the "2D Horizon" button of Lunar_Horizon_Simulator_Skeleton.html (served by server.py).
          Shows the 360-degree panorama of horizon.py with the Sun, the Earth and, if requested,
          a satellite over the chosen observation window. -->
@@ -27,7 +27,7 @@
     <script src="/plotly.min.js"></script>
     <script>
         const params = Object.fromEntries(new URLSearchParams(location.search));
-        const colors = { Sole: '#ffd60a', Terra: '#4ade80' };
+        const colors = { Sun: '#ffd60a', Earth: '#4ade80' };
 
         fetch('/api/horizon', {
             method: 'POST',

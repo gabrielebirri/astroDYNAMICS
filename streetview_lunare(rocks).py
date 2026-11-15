@@ -136,7 +136,7 @@ def terra_media(lat, lon):
 def scegli_sito(a):
     """Restituisce (nome, lat, lon) dagli argomenti o dal menu interattivo."""
     if a.lat is not None and a.lon is not None:
-        return a.nome or "Sito personalizzato", a.lat, a.lon
+        return a.nome or "Custom site", a.lat, a.lon
     scelta = a.sito
     if scelta is None:
         print("\n=== VISTA DAL SUOLO LUNARE ===")
@@ -145,7 +145,7 @@ def scegli_sito(a):
         print(" [ C] Latitudine e longitudine personalizzate")
         scelta = input("\nScegli un sito (predefinito = 1): ").strip().upper() or "1"
     if scelta == "C":
-        nome = input("Nome del sito: ").strip() or "Sito personalizzato"
+        nome = input("Nome del sito: ").strip() or "Custom site"
         lat = float(input("Latitudine (-90 a 90): ").strip())
         lon = float(input("Longitudine est (-180 a 360): ").strip())
         return nome, lat, lon
@@ -256,7 +256,7 @@ def main():
     vicino = cuci_bordo(vicino, lontano, celle)
     quota0 = float(vicino[(n_v - 1) // 2, (n_v - 1) // 2])
     if math.isnan(quota0):
-        raise SystemExit("Nel punto scelto il DEM non contiene dati.")
+        raise SystemExit("The DEM has no data at the chosen point.")
 
     # Posizione del Sole e della Terra: un istante solo, oppure un intervallo a scelta
     if (a.sole_az is None) != (a.sole_el is None):
@@ -267,11 +267,11 @@ def main():
         with open(a.cielo, encoding="utf-8") as f:
             cielo = [(t, (az_s % 360.0, el_s), (az_t % 360.0, el_t)) for t, az_s, el_s, az_t, el_t in json.load(f)]
         if not cielo:
-            raise SystemExit("Il file indicato con --cielo non contiene istanti.")
+            raise SystemExit("The file given with --cielo contains no instants.")
         fonte = "JPL Horizons"
     elif a.sole_az is not None:
-        cielo = [("posizione inserita a mano", (a.sole_az % 360.0, a.sole_el), terra_media(lat, lon))]
-        fonte = "valori inseriti a mano, Terra in posizione media"
+        cielo = [("manually entered position", (a.sole_az % 360.0, a.sole_el), terra_media(lat, lon))]
+        fonte = "manually entered values, Earth at its mean position"
     else:
         if a.inizio:
             inizio = leggi_istante(a.inizio)
@@ -346,11 +346,11 @@ def main():
 
 
 MODELLO_HTML = r"""<!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Vista dal suolo - __TITOLO__</title>
+<title>Moon View · Explore - __TITOLO__</title>
 <style>
   html, body { margin: 0; height: 100%; background: #000; color: #e8eaee; overflow: hidden;
                font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
@@ -384,23 +384,22 @@ MODELLO_HTML = r"""<!DOCTYPE html>
 <canvas id="vista"></canvas>
 <div id="info" class="riquadro">
   <h1>__TITOLO__</h1>
-  <p id="coord"></p>
   <p id="cielo"></p>
   <p id="avviso"></p>
-  <p>Trascina per guardarti intorno. Clic su un punto del terreno per andarci. W A S D o frecce per spostarti, Maiusc per andare più veloce. Rotella per lo zoom. V cambia vista, C cambia personaggio.</p>
+  <p>Drag to look around. Click a point on the terrain to go there. W A S D or arrow keys to move, Shift to go faster. Mouse wheel to zoom. V switches view, C switches character.</p>
 </div>
 <div id="comandi" class="riquadro">
-  <label>Vista</label>
-  <div class="scelta"><button id="vista1" type="button">Prima persona</button><button id="vista3" type="button">Terza persona</button></div>
-  <label>Personaggio</label>
-  <div class="scelta"><button id="persA" type="button">Astronauta</button><button id="persR" type="button">Rover</button></div>
-  <label>Sassi e grana del suolo (decorativi)</label>
-  <div class="scelta"><button id="detSi" type="button">Mostra</button><button id="detNo" type="button">Nascondi</button></div>
-  <label>Velocità <output id="oVel"></output><input id="vel" type="range" min="0" max="1" step="0.001"></label>
-  <label id="rigaIstante">Istante <output id="oIst"></output><input id="ist" type="range" min="0" step="1" value="0"></label>
-  <label>Luminosità <output id="oLum"></output><input id="lum" type="range" min="0" max="1" step="0.001"></label>
-  <label>Altezza degli occhi <output id="oAlt"></output><input id="alt" type="range" min="0" max="1" step="0.001"></label>
-  <button id="ritorna" type="button">Torna al punto di partenza</button>
+  <label>View</label>
+  <div class="scelta"><button id="vista1" type="button">First person</button><button id="vista3" type="button">Third person</button></div>
+  <label>Character</label>
+  <div class="scelta"><button id="persA" type="button">Astronaut</button><button id="persR" type="button">Rover</button></div>
+  <label>Rocks and soil grain (decorative)</label>
+  <div class="scelta"><button id="detSi" type="button">Show</button><button id="detNo" type="button">Hide</button></div>
+  <label>Speed <output id="oVel"></output><input id="vel" type="range" min="0" max="1" step="0.001"></label>
+  <label id="rigaIstante">Time <output id="oIst"></output><input id="ist" type="range" min="0" step="1" value="0"></label>
+  <label>Brightness <output id="oLum"></output><input id="lum" type="range" min="0" max="1" step="0.001"></label>
+  <label>Eye height <output id="oAlt"></output><input id="alt" type="range" min="0" max="1" step="0.001"></label>
+  <button id="ritorna" type="button">Back to the starting point</button>
 </div>
 <div id="bussola" class="riquadro"></div>
 <div id="errore" class="riquadro"></div>
@@ -459,7 +458,7 @@ try {
 } catch (err) {
   const box = document.getElementById("errore");
   box.style.display = "block";
-  box.textContent = "Questo browser non riesce ad avviare la grafica 3D (WebGL).";
+  box.textContent = "This browser cannot start 3D graphics (WebGL).";
   throw err;
 }
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -875,7 +874,7 @@ function calcolaOmbre() {
 }
 let ombreCalcolate = false, attesaOmbre = 0;
 function richiediOmbre() {                            // il calcolo dura circa un secondo: prima si mostra l'avviso
-  document.getElementById("avviso").textContent = "Calcolo delle ombre dei rilievi…";
+  document.getElementById("avviso").textContent = "Computing terrain shadows…";
   clearTimeout(attesaOmbre);
   attesaOmbre = setTimeout(() => {
     const t0 = performance.now();
@@ -994,7 +993,6 @@ stato.alt = numero("alt", PERSONAGGI[stato.pers].occhi);
 // Direzioni del Sole e della Terra: cambiano solo quando si sceglie un altro istante con il cursore
 const versoSole = new THREE.Vector3(), versoTerra = new THREE.Vector3();
 let comandiPronti = false;                                   // diventa vero quando i comandi della pagina sono collegati
-const gradi = (v) => `${v >= 0 ? "+" : ""}${v.toFixed(1)}°`;
 function impostaIstante(k) {
   stato.k = Math.max(0, Math.min(D.cielo.length - 1, Math.round(k)));
   const c = D.cielo[stato.k];
@@ -1013,10 +1011,9 @@ function impostaIstante(k) {
   // Il disco solare ha un raggio di circa 0,27 gradi: la luce cala mentre scende sotto l'orizzontale
   const sopra = Math.max(0, Math.min(1, (c.s[1] + 0.27) / 0.54));
   luceSole.intensity = compensazione * sopra;
-  const notte = sopra === 0 ? " · NOTTE: il Sole è sotto l'orizzonte, la scena è buia" : "";
+  const notte = sopra === 0 ? "NIGHT: the Sun is below the horizon, the scene is dark" : "";
   discoTerra.visible = c.e[1] > -12;
-  document.getElementById("cielo").textContent = `${c.t} (${D.fonte}) · Sole: azimut ${c.s[0].toFixed(1)}°, ` +
-    `altezza ${gradi(c.s[1])} · Terra: azimut ${c.e[0].toFixed(1)}°, altezza ${gradi(c.e[1])}${notte}`;
+  document.getElementById("cielo").textContent = notte;
   document.getElementById("ist").value = stato.k;
   document.getElementById("oIst").textContent = c.t.slice(5, 16);
 }
@@ -1034,7 +1031,6 @@ const aCursore = (v, min, max) => Math.log(Math.min(Math.max(v, min), max) / min
 const metri = (v) => v < 1000 ? `${v < 10 ? v.toFixed(1) : Math.round(v)} m` : `${(v / 1000).toFixed(1)} km`;
 
 const el = (id) => document.getElementById(id);
-el("coord").textContent = `Lat ${D.lat.toFixed(3)}°, Lon ${D.lon.toFixed(3)}° · quota del terreno ${Math.round(D.quota0)} m`;
 el("ist").addEventListener("input", (ev) => impostaIstante(+ev.target.value));
 function aggiornaComandi() {
   el("alt").value = aCursore(stato.alt, ALT_MIN, ALT_MAX); el("oAlt").textContent = metri(stato.alt);
@@ -1171,7 +1167,7 @@ function muovi(dt) {
 const suolo = new THREE.Vector3(), su = new THREE.Vector3(), est = new THREE.Vector3(), nord = new THREE.Vector3();
 const tmp = new THREE.Vector3(), avantiV = new THREE.Vector3(), destra = new THREE.Vector3(), mira = new THREE.Vector3();
 const normale = new THREE.Vector3(), appoggioRover = new THREE.Vector3(0, 1, 0);
-const NOMI = ["N", "NE", "E", "SE", "S", "SO", "O", "NO"];
+const NOMI = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
 
 // Perpendicolare al terreno sotto il personaggio, dalla pendenza misurata a un passo di distanza
 function normaleTerreno(h, p, out) {
@@ -1268,8 +1264,8 @@ function disegna(adesso) {
 
   el("bussola").innerHTML =
     `<b>${NOMI[Math.round(stato.dir / 45) % 8]} ${Math.round(stato.dir) % 360}°</b><br>` +
-    (stato.vista === 1 ? `sguardo ${stato.incl >= 0 ? "+" : ""}${stato.incl.toFixed(1)}° · ` : "") +
-    `${(Math.hypot(stato.e, stato.n) / 1000).toFixed(1)} km dalla partenza · suolo a ${Math.round(h)} m`;
+    (stato.vista === 1 ? `pitch ${stato.incl >= 0 ? "+" : ""}${stato.incl.toFixed(1)}° · ` : "") +
+    `${(Math.hypot(stato.e, stato.n) / 1000).toFixed(1)} km from the start · ground at ${Math.round(h)} m`;
 
   renderer.render(scena, camera);
   requestAnimationFrame(disegna);
