@@ -230,6 +230,8 @@ def main():
                    help="horizons = JPL Horizons tramite ephemeris.py (predefinito); skyfield = calcolo in locale")
     p.add_argument("--confronta", action="store_true",
                    help="con horizons, calcola anche con skyfield e stampa la differenza (controllo incrociato)")
+    p.add_argument("--cielo", help="file JSON con le posizioni gia' calcolate: righe [istante, az Sole, el Sole, az Terra, el Terra] "
+                                   "(usato dal server per mostrare le stesse effemeridi degli altri script)")
     p.add_argument("--sole-az", type=float, help="azimut del Sole in gradi, se calcolato con un altro programma")
     p.add_argument("--sole-el", type=float, help="elevazione del Sole in gradi, se calcolata con un altro programma")
     p.add_argument("--raggio-km", type=float, default=150.0, help="distanza massima del terreno mostrato")
@@ -261,7 +263,13 @@ def main():
         raise SystemExit("Indicare sia --sole-az sia --sole-el, oppure nessuno dei due.")
     if a.istante and a.inizio:
         raise SystemExit("Usare --istante oppure --inizio/--fine, non entrambi.")
-    if a.sole_az is not None:
+    if a.cielo:
+        with open(a.cielo, encoding="utf-8") as f:
+            cielo = [(t, (az_s % 360.0, el_s), (az_t % 360.0, el_t)) for t, az_s, el_s, az_t, el_t in json.load(f)]
+        if not cielo:
+            raise SystemExit("Il file indicato con --cielo non contiene istanti.")
+        fonte = "JPL Horizons"
+    elif a.sole_az is not None:
         cielo = [("posizione inserita a mano", (a.sole_az % 360.0, a.sole_el), terra_media(lat, lon))]
         fonte = "valori inseriti a mano, Terra in posizione media"
     else:
@@ -977,7 +985,7 @@ const stato = {
   dettagli: parametri.get("det") !== "0",                    // sassi e grana decorativi
   inMoto: false, fase: 0,                                    // per animare il passo e le ruote
   alt: 0, rotta: 0,                                          // altezza degli occhi; direzione del personaggio
-  vel: numero("vel", 1500),                                  // velocita' di spostamento, in metri al secondo
+  vel: numero("vel", 40),                                  // velocita' di spostamento, in metri al secondo
   lum: numero("lum", 1),                                     // correzione manuale della luminosita' (1 = automatica)
   viaggio: null,                                             // spostamento in corso dopo un clic
 };
@@ -1020,7 +1028,7 @@ impostaIstante(numero("k", Math.max(0, primoConLuce)));
 stato.dir = numero("dir", D.cielo[stato.k].s[1] > -1 ? D.cielo[stato.k].s[0] : 0);   // all'inizio si guarda verso il Sole
 stato.rotta = stato.dir;
 
-const ALT_MIN = 0.5, ALT_MAX = 5000, VEL_MIN = 20, VEL_MAX = 20000, LUM_MIN = 0.2, LUM_MAX = 5;   // cursori logaritmici
+const ALT_MIN = 0.5, ALT_MAX = 5000, VEL_MIN = 0.5, VEL_MAX = 20000, LUM_MIN = 0.2, LUM_MAX = 5;   // cursori logaritmici
 const daCursore = (t, min, max) => min * Math.pow(max / min, t);
 const aCursore = (v, min, max) => Math.log(Math.min(Math.max(v, min), max) / min) / Math.log(max / min);
 const metri = (v) => v < 1000 ? `${v < 10 ? v.toFixed(1) : Math.round(v)} m` : `${(v / 1000).toFixed(1)} km`;

@@ -23,6 +23,7 @@ import math
 import os
 import re
 import subprocess
+import tempfile
 import sys
 import threading
 import time
@@ -563,15 +564,32 @@ def api_streetview():
     d = request.get_json(force=True)
     nome, lat, lon, slug = leggi_sito(d)
     inizio, fine, passo = leggi_tempi(d)
-    comando = [
-        sys.executable, SCRIPT_STREETVIEW, "--nome", nome, f"--lat={lat}", f"--lon={lon}",
-        "--istante", "", "--inizio", inizio, "--fine", fine, "--passo", passo, "--no-browser",
-    ]
-    esito = subprocess.run(comando, cwd=CARTELLA, capture_output=True, text=True, timeout=900)
+    # Sole e Terra: le stesse identiche tabelle (e la stessa cache) degli strati di luce e di
+    # visibilita' della Terra, cosi' la vista dal suolo mostra le posizioni calcolate dagli altri script
+    sole = effemeridi(ephemeris.get_lunar_ephemeris, "10", lat, lon, 0, inizio, fine, passo)
+    terra = effemeridi(earth_visibility.get_lunar_ephemeris, "399", lat, lon, 0, inizio, fine, passo)
+    if [r[0] for r in sole] != [r[0] for r in terra]:
+        raise Errore("Le effemeridi non condividono la stessa griglia temporale.")
+    cielo = [[f"{s[0]:%Y-%m-%d %H:%M} UTC", s[1], s[2], e[1], e[2]] for s, e in zip(sole, terra)]
+    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8") as f:
+        json.dump(cielo, f)
+    try:
+        comando = [
+            sys.executable, SCRIPT_STREETVIEW, "--nome", nome, f"--lat={lat}", f"--lon={lon}",
+            "--istante", "", "--cielo", f.name, "--no-browser",
+        ]
+        esito = subprocess.run(comando, cwd=CARTELLA, capture_output=True, text=True, timeout=900)
+    finally:
+        os.unlink(f.name)
     if esito.returncode != 0:
         righe = (esito.stderr or esito.stdout).strip().splitlines()
         raise Errore("Street view non generato: " + (righe[-1] if righe else "errore sconosciuto"))
-    return jsonify(url=f"/streetview/file/{slug}")
+    # Istante della linea del tempo del simulatore: la vista si apre su quello
+    try:
+        k = min(max(int(d.get("k")), 0), len(cielo) - 1)
+    except (TypeError, ValueError):
+        k = None
+    return jsonify(url=f"/streetview/file/{slug}" + (f"?k={k}" if k is not None else ""))
 
 
 @app.get("/streetview/file/<slug>")
