@@ -1,14 +1,16 @@
 # Moon View
 
-Moon View is an interactive lunar exploration and landing-site comparison project. It combines lunar terrain with the changing positions of the Sun, Earth, and selected satellites to help you explore what a location might be like. It is a visual and educational tool, not a mission-planning system or a guarantee that a site is safe to land on.
+Moon View is an interactive site for exploring the Moon and comparing possible landing locations. It brings lunar terrain, sunlight, Earth and satellite visibility, and slope information together in one place. It is designed to be approachable for everyone: it can support an early, preliminary comparison of sites, while also giving space enthusiasts ways to explore the lunar surface and imagine what astronauts will experience when they will visit those sites.
+
+The site also includes a **demo gamification concept**: landing-site scores and a leaderboard make it fun to compare locations and observation windows. These features are for exploration and illustration, not validated mission rankings or proof that a location is safe to land on.
 
 ## What you can do
 
-- Explore a 3D view of the Moon and zoom in on a landing site.
-- View local terrain and follow how sunlight, Earth, and a selected satellite are seen from the surface.
-- Compare visibility and terrain-slope scores for one or two locations over a chosen period.
-- Open a 360-degree horizon view or a ground-level street view for a site.
-- Try the separate `lunar.py` and `soil_composition.py` scripts for terrain and example soil-composition maps. Soil compositions and deposits shown by `soil_composition.py` are hypothetical illustrations, not measured lunar data.
+- Explore the Moon in 3D, zoom in on a location, and inspect its terrain.
+- Follow how sunlight, Earth, and a selected satellite appear from the surface over time.
+- Compare visibility and terrain-slope assessments for one or two locations and time periods.
+- Use the **Explore** tab for an immersive, first-person-style street-level view of a site.
+- Try the demo leaderboard to compare scores; its player results are fictional and generated for demonstration.
 
 ## Run Moon View
 
