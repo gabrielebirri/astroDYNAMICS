@@ -1,0 +1,8 @@
+affine
+Flask
+flask-cors
+numpy
+plotly
+pyproj
+rasterio
+skyfield

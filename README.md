@@ -12,10 +12,10 @@ Moon View is an interactive lunar exploration and landing-site comparison projec
 
 ## Run Moon View
 
-You need Python 3 and an internet connection. From the project folder, install the Python packages:
+You need Python 3 and an internet connection. From the project folder, install the packages listed in `requirement.txt`:
 
 ```bash
-python -m pip install numpy rasterio pyproj plotly flask
+python -m pip install -r requirement.txt
 ```
 
 Start the app:
