@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moon View — Credits</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+    <header class="h-16 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 lg:px-6 flex items-center justify-between sticky top-0 z-40">
+        <a href="/" class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                </svg>
+            </div>
+            <div>
+                <div class="text-sm sm:text-base font-bold tracking-tight text-white leading-none">Moon View</div>
+                <span class="text-[11px] font-mono text-slate-400">LOLA 118 m · JPL Horizons</span>
+            </div>
+        </a>
+
+        <nav class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800" aria-label="Page selector">
+            <a href="/" class="px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-slate-200 transition-all flex items-center gap-2">
+                <span aria-hidden="true">←</span>
+                <span>Back to Moon View</span>
+            </a>
+            <span class="px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold bg-indigo-600 text-white shadow-sm flex items-center gap-2" aria-current="page">
+                <span class="w-2 h-2 rounded-full bg-indigo-200"></span>
+                <span>Credits</span>
+            </span>
+        </nav>
+    </header>
+
+    <main class="flex-1 w-full max-w-3xl mx-auto px-4 lg:px-6 py-10">
+        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-white">Credits</h1>
+        <p class="mt-2 text-sm text-slate-400">Data sources used by Moon View.</p>
+
+        <section class="mt-8" aria-labelledby="data-sources">
+            <h2 id="data-sources" class="text-[11px] font-mono uppercase tracking-widest text-slate-500">Data sources</h2>
+
+            <ul class="mt-3 divide-y divide-slate-800 rounded-xl border border-slate-800 bg-slate-900/60">
+                <li class="p-4">
+                    <div class="text-sm font-semibold text-white">Ephemerides</div>
+                    <div class="mt-1 text-sm text-slate-300">JPL Horizons System</div>
+                </li>
+                <li class="p-4">
+                    <div class="text-sm font-semibold text-white">Topographic data</div>
+                    <div class="mt-1 text-sm text-slate-300">USGS LOLA Planetary Maps</div>
+                    <a class="mt-1 inline-block font-mono text-xs text-indigo-400 hover:text-indigo-300 break-all" href="https://planetarymaps.usgs.gov/" target="_blank" rel="noopener noreferrer">https://planetarymaps.usgs.gov/</a>
+                </li>
+                <li class="p-4">
+                    <div class="text-sm font-semibold text-white">Space-ROS GitHub repo</div>
+                    <a class="mt-1 inline-block font-mono text-xs text-indigo-400 hover:text-indigo-300 break-all" href="https://github.com/space-ros/demos/blob/main/curiosity_rover/" target="_blank" rel="noopener noreferrer">https://github.com/space-ros/demos/blob/main/curiosity_rover/</a>
+                </li>
+                <li class="p-4">
+                    <div class="text-sm font-semibold text-white">Moon 3D image</div>
+                    <div class="mt-1 text-sm text-slate-300">NASA Eyes on the Solar System</div>
+                    <a class="mt-1 inline-block font-mono text-xs text-indigo-400 hover:text-indigo-300 break-all" href="https://eyes.nasa.gov/apps/solar-system/#/earth/moons/moon?embed=true" target="_blank" rel="noopener noreferrer">https://eyes.nasa.gov/apps/solar-system/#/earth/moons/moon?embed=true</a>
+                </li>
+                <li class="p-4">
+                    <div class="text-sm font-semibold text-white">List of notable Moon sites</div>
+                    <div class="mt-1 text-sm text-slate-300">USGS Planetary Names</div>
+                    <a class="mt-1 inline-block font-mono text-xs text-indigo-400 hover:text-indigo-300 break-all" href="https://planetarynames.wr.usgs.gov/" target="_blank" rel="noopener noreferrer">https://planetarynames.wr.usgs.gov/</a>
+                </li>
+                <li class="p-4">
+                    <div class="text-sm font-semibold text-white">List of Apollo missions landing sites</div>
+                    <div class="mt-1 text-sm text-slate-300">QuickMap</div>
+                </li>
+            </ul>
+        </section>
+    </main>
+
+</body>
+</html>

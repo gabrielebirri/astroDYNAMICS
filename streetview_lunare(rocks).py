@@ -50,7 +50,7 @@ try:
         scarica_ritaglio,
     )
 except ImportError:  # nome originale dello stesso modulo
-    from orizzonte_usgs import (
+    from astroDYNAMICS.lunar_dems.orizzonte_usgs import (
         LONLAT,
         R_LUNA,
         SITI,

@@ -46,6 +46,7 @@ import sat_visibility  # noqa: E402
 
 PAGINA = "Lunar_Horizon_Simulator_Skeleton.html"
 PAGINA_ORIZZONTE = "horizon_view.html"
+PAGINA_CREDITS = "credits.html"
 SCRIPT_STREETVIEW = "streetview_lunare(rocks).py"
 
 LARGHEZZA_KM = 100.0  # lato della zona mostrata (come gli script)
@@ -498,16 +499,37 @@ def api_punteggi():
             stato["current_blackout"] = blackout
             stato["current_visible"] = visibilita
 
+    # Pesi liberi (non negativi) di disponibilita' e continuita': contano solo in proporzione,
+    # quindi vengono normalizzati a somma 1 e il punteggio resta sempre fra 0 e 100
+    pesi = []
+    for chiave, predefinito in (("weight_availability", 75.0), ("weight_blackout", 25.0)):
+        try:
+            peso = float(d.get(chiave, predefinito))
+        except (TypeError, ValueError):
+            raise Errore("The score weights must be numbers.")
+        if not math.isfinite(peso) or peso < 0:
+            raise Errore("The score weights must be non-negative numbers.")
+        pesi.append(peso)
+    if sum(pesi) <= 0:
+        raise Errore("At least one of the two score weights must be greater than zero.")
+    peso_disponibilita, peso_continuita = (p / sum(pesi) for p in pesi)
+
     def riepilogo(stato):
-        disponibilita = 100.0 * stato["visible_seconds"] / (valid_count * durata_analizzata)
+        # punteggio = peso_vis * (tempo visibile / tempo totale)
+        #           + peso_blackout * (tempo totale - blackout massimo) / tempo totale
+        # con lo stesso tempo totale (quello analizzato) e le medie sulle celle valide
+        tempo_totale = durata_analizzata
+        tempo_visibile = stato["visible_seconds"] / valid_count
         blackout_medio = float(np.sum(stato["longest_blackout"][validi])) / valid_count
         periodo_medio = float(np.sum(stato["longest_visible"][validi])) / valid_count
-        continuita = 100.0 * (1.0 - min(blackout_medio / durata_finestra, 1.0))
+        disponibilita = 100.0 * tempo_visibile / tempo_totale
+        continuita = 100.0 * (tempo_totale - blackout_medio) / tempo_totale
         return dict(
             availability_pct=round(disponibilita, 2),
             mean_max_blackout_h=round(blackout_medio / 3600.0, 2),
             mean_longest_visibility_h=round(periodo_medio / 3600.0, 2),
-            score=round(0.75 * disponibilita + 0.25 * continuita, 2),
+            continuity_pct=round(continuita, 2),
+            score=round(peso_disponibilita * disponibilita + peso_continuita * continuita, 2),
         )
 
     try:
@@ -539,6 +561,7 @@ def api_punteggi():
         site=t["nome"], satellite=satellite or None, sample_step=passo,
         window_hours=round(durata_finestra / 3600.0, 2), analyzed_hours=round(durata_analizzata / 3600.0, 2),
         valid_cells=valid_count,
+        weights=dict(availability=round(peso_disponibilita, 4), blackout=round(peso_continuita, 4)),
         visibility={kind: riepilogo(accumuli[kind]) for kind in selezioni},
         simultaneous=riepilogo(contemporaneo),
         terrain_safety=dict(
@@ -699,6 +722,11 @@ def pagina():
 @app.get("/horizon")
 def pagina_orizzonte():
     return send_file(os.path.join(CARTELLA, PAGINA_ORIZZONTE), max_age=0)
+
+
+@app.get("/credits")
+def pagina_credits():
+    return send_file(os.path.join(CARTELLA, PAGINA_CREDITS), max_age=0)
 
 
 @app.get("/streetview")

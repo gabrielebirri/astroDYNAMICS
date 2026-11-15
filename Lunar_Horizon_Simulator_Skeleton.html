@@ -143,8 +143,13 @@
             <button id="tab-leaderboard" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="leaderboard-panel"
                 class="view-tab px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-slate-200 transition-all flex items-center gap-2">
                 <span class="w-2 h-2 rounded-full bg-emerald-400/70"></span>
-                <span>LeaderBoard</span>
+                <span>Leaderboard</span>
             </button>
+            <a id="tab-credits" href="/credits"
+                class="px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-400 hover:text-slate-200 transition-all flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-sky-400/70"></span>
+                <span>Credits</span>
+            </a>
         </nav>
     </header>
 
@@ -378,7 +383,9 @@
                         <p class="mt-1 rounded-lg border border-rose-500/20 bg-slate-950/80 p-2 text-[11px] leading-relaxed text-slate-300">
                             Earth visibility helps assessing opportunities for direct radio links to Earth and the Moon;
                             Ridges and the local horizon can interrupt line of sight.
-                            The percentage indicates how much of the analyzed area can see part of Earth's disk at the selected time. 
+                            The percentage indicates how much of the analyzed area can see part of Earth's disk at the selected time.
+                            In the site assessment, the Earth visibility score uses the same formula as Light visibility:
+                            total visible time and longest blackout over the selected window, combined with the two score weights.
                         </p>
                     </details>
                     <button type="button" data-layer="sat" aria-pressed="false"
@@ -410,6 +417,8 @@
                             of sight to the satellite at the selected time. 
                             Consider the full timeline and the selected orbiter:
                             one favorable instant does not guarantee frequent passes or continuous communications.
+                            In the site assessment, the Satellite visibility score uses the same formula as Light visibility:
+                            total visible time and longest blackout over the selected window, combined with the two score weights.
                         </p>
                     </details>
                     <div class="space-y-2 pt-2 border-t border-slate-800/80">
@@ -450,12 +459,7 @@
                                 <span aria-hidden="true" class="flex h-4 w-4 items-center justify-center rounded-full border border-slate-600 font-bold">i</span>
                                 About these example layers
                             </summary>
-                            <p class="mt-1 rounded-lg border border-amber-500/20 bg-slate-950/80 p-2 text-[11px] leading-relaxed text-slate-300">
-                                These two layers are illustrative, not measurements. They are synthesised from the DEM to show how
-                                soil data would look on the mesh: sandiness is higher on flat, smooth ground (loose regolith) and
-                                lower on steep or rough ground (exposed rock); ice is placed in depressions and on pole-facing
-                                slopes, more strongly at high latitudes. Do not use them to choose a site.
-                            </p>
+                            <p class="mt-1 rounded-lg border border-amber-500/20 bg-slate-950/80 p-2 text-[11px] leading-relaxed text-slate-300"></p>
                         </details>
                     </div>
                 </div>
@@ -541,15 +545,6 @@
 
                 <!-- Moon Interactive 3D Viewport Container -->
                 <div id="moon-canvas-container" class="flex-1 min-h-[360px] rounded-2xl border border-slate-800 bg-slate-950 relative overflow-hidden shadow-2xl">
-                    <!-- Top-Left Viewport Label -->
-                    <div class="absolute top-3.5 left-3.5 z-10 flex items-center gap-2 pointer-events-none">
-                        <span class="text-[11px] font-mono text-slate-300 bg-slate-900/85 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-700/80 shadow">
-                            3D_LUNAR_GLOBE // WEBGL
-                        </span>
-                        <span id="hud-zoom-readout" class="text-[11px] font-mono text-indigo-300 bg-slate-900/85 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-700/80 shadow">
-                            DIST: 3.20 R☾
-                        </span>
-                    </div>
 
                     <!-- Top-Right Interactive Camera Controls -->
                     <div class="absolute top-3.5 right-3.5 z-10 flex items-center gap-2">
@@ -636,7 +631,20 @@
                 <button id="score-close" type="button" aria-label="Close scores"
                     class="rounded-lg border border-slate-700 px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-800">Close</button>
             </div>
-            <div class="mt-4 rounded-xl border border-slate-800 bg-slate-950/70 p-3">
+            <div class="mt-4 flex flex-wrap items-end gap-x-6 gap-y-3 rounded-xl border border-slate-800 bg-slate-950/70 p-3">
+                <label class="text-xs text-slate-300">Weight · total visibility
+                    <span class="mt-1 flex items-center gap-2">
+                        <input id="score-weight-availability" type="number" min="0" step="any" value="75"
+                            class="w-24 rounded-lg border border-slate-700 bg-slate-900 px-2 py-1.5 font-mono text-white">
+                    </span>
+                </label>
+                <label class="text-xs text-slate-300">Weight · maximum blackout
+                    <span class="mt-1 flex items-center gap-2">
+                        <input id="score-weight-blackout" type="number" min="0" step="any" value="25"
+                            class="w-24 rounded-lg border border-slate-700 bg-slate-900 px-2 py-1.5 font-mono text-white">
+                        <span id="score-weight-share" class="font-mono text-slate-500">75% / 25%</span>
+                    </span>
+                </label>
                 <label class="text-xs text-slate-300">Indicative maximum slope
                     <span class="mt-1 flex items-center gap-2">
                         <input id="score-max-slope" type="number" min="0" max="90" step="1" value="15"
@@ -646,7 +654,9 @@
                 </label>
             </div>
             <p class="mt-2 text-[10px] leading-relaxed text-amber-300/90">
-                Visibility score = 75% time availability + 25% continuity (1 − mean longest blackout / window duration).
+                Light, Earth and Satellite visibility all use the same formula, each with its own visible time and blackouts:
+                visibility score = w<sub>vis</sub> · (visible time / total time) + w<sub>blackout</sub> · (total time − longest blackout) / total time.
+                The two weights can be any non-negative numbers: only their ratio matters, they are normalised to sum to 100%.
                 Blackout and continuous-visibility durations are averaged over the valid cells. Simultaneous visibility requires Sun + Earth + the selected satellite.
                 The time resolution is the selected time step.
             </p>
@@ -666,7 +676,7 @@
         <div class="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 p-4 shadow-2xl sm:p-6">
             <div class="flex items-start justify-between gap-4">
                 <div>
-                    <h2 id="leaderboard-title" class="text-lg font-bold text-white">LeaderBoard</h2>
+                    <h2 id="leaderboard-title" class="text-lg font-bold text-white">Leaderboard</h2>
                     <p class="mt-1 text-xs text-slate-400">Player scores per landing site: every run has its own observation period. Filter by score, by site and by any time window.</p>
                 </div>
                 <button id="leaderboard-close" type="button" aria-label="Close leaderboard"
@@ -749,6 +759,9 @@
             const scoreResults = document.getElementById('score-results');
             const scoreClose = document.getElementById('score-close');
             const scoreMaxSlope = document.getElementById('score-max-slope');
+            const scoreWeightAvailability = document.getElementById('score-weight-availability');
+            const scoreWeightBlackout = document.getElementById('score-weight-blackout');
+            const scoreWeightShare = document.getElementById('score-weight-share');
 
             // Input & Telemetry references
             const selectLandingSite = document.getElementById('select-landing-site');
@@ -768,7 +781,6 @@
             // 3D MOON SCENE INITIALIZATION (Pre-made Texture, Flat Lit)
             // -------------------------------------------------------------
             const canvasContainer = document.getElementById('moon-canvas-container');
-            const hudZoomReadout = document.getElementById('hud-zoom-readout');
             const btnAutoRotate = document.getElementById('btn-auto-rotate');
             const autoRotateDot = document.getElementById('auto-rotate-dot');
             const btnResetCamera = document.getElementById('btn-reset-camera');
@@ -1046,9 +1058,6 @@
 
                 controls.update();
 
-                // Update live zoom/distance readout in HUD
-                const camDist = camera.position.distanceTo(controls.target);
-                hudZoomReadout.textContent = `DIST: ${camDist.toFixed(2)} R☾`;
 
                 renderer.render(scene, camera);
             }
@@ -1706,7 +1715,7 @@
                 }));
             }
 
-            function addScoreRow(parent, name, result, terrain = false) {
+            function addScoreRow(parent, name, result, terrain = false, weightLabel = '') {
                 const row = document.createElement('div');
                 row.className = 'rounded-xl border border-slate-800 bg-slate-950/70 p-3';
                 const heading = document.createElement('div');
@@ -1734,7 +1743,7 @@
                     ? `Mean index ${result.score.toFixed(1)} / 100 · ${result.coverage_pct.toFixed(1)}% of cells with index ≥ 50 · peak ${result.peak.toFixed(0)} · fictitious example layer, not a measurement.`
                     : terrain
                     ? `${result.score.toFixed(1)}% of cells below ${result.max_slope}° of slope (indicative threshold).`
-                    : `${result.availability_pct.toFixed(1)}% of the time available · mean longest continuous visibility ${result.mean_longest_visibility_h.toFixed(1)} h · mean longest blackout ${result.mean_max_blackout_h.toFixed(1)} h · score 75/25`;
+                    : `${result.availability_pct.toFixed(1)}% of the time available · mean longest continuous visibility ${result.mean_longest_visibility_h.toFixed(1)} h · mean longest blackout ${result.mean_max_blackout_h.toFixed(1)} h · continuity ${result.continuity_pct.toFixed(1)}% · score ${weightLabel}`;
                 row.appendChild(detail);
                 parent.appendChild(row);
             }
@@ -1754,12 +1763,22 @@
                     scoreResults.appendChild(card);
                     return;
                 }
-                addScoreRow(card, 'Light visibility', result.visibility.sun);
-                addScoreRow(card, 'Earth visibility', result.visibility.earth);
-                if (result.visibility.sat) {
-                    addScoreRow(card, `Satellite visibility (${result.satellite})`, result.visibility.sat);
+                if (!result.weights) {
+                    // Server started before the weights were added: it must be restarted to load the new code
+                    const message = document.createElement('p');
+                    message.className = 'text-xs text-rose-300';
+                    message.textContent = 'The backend is running an older version: stop it and start it again with “python server.py”.';
+                    card.appendChild(message);
+                    scoreResults.appendChild(card);
+                    return;
                 }
-                addScoreRow(card, 'Simultaneous visibility', result.simultaneous);
+                const weightLabel = `${(100 * result.weights.availability).toFixed(1)}/${(100 * result.weights.blackout).toFixed(1)}`;
+                addScoreRow(card, 'Light visibility', result.visibility.sun, false, weightLabel);
+                addScoreRow(card, 'Earth visibility', result.visibility.earth, false, weightLabel);
+                if (result.visibility.sat) {
+                    addScoreRow(card, `Satellite visibility (${result.satellite})`, result.visibility.sat, false, weightLabel);
+                }
+                addScoreRow(card, 'Simultaneous visibility', result.simultaneous, false, weightLabel);
                 addScoreRow(card, 'Terrain safety', result.terrain_safety, true);
                 if (result.soil) {
                     addScoreRow(card, 'Soil sandiness (example)', result.soil.sandiness);
@@ -1797,6 +1816,8 @@
                             return await api('/api/scores', {
                                 lat: site.lat, lon: site.lon, satellite: state.satellite,
                                 max_slope: Number(scoreMaxSlope.value),
+                                weight_availability: scoreWeightAvailability.value === '' ? NaN : Number(scoreWeightAvailability.value),
+                                weight_blackout: scoreWeightBlackout.value === '' ? NaN : Number(scoreWeightBlackout.value),
                                 ...state.params
                             });
                         } catch (error) {
@@ -1836,7 +1857,16 @@
                 openScorePanel();
                 scoreClose.focus();
             });
-            [scoreMaxSlope].forEach(input => input.addEventListener('change', () => {
+            function updateWeightShare() {
+                const a = Number(scoreWeightAvailability.value), b = Number(scoreWeightBlackout.value);
+                const valid = scoreWeightAvailability.value !== '' && scoreWeightBlackout.value !== ''
+                    && Number.isFinite(a) && Number.isFinite(b) && a >= 0 && b >= 0 && a + b > 0;
+                scoreWeightShare.textContent = valid
+                    ? `${(100 * a / (a + b)).toFixed(1)}% / ${(100 * b / (a + b)).toFixed(1)}%`
+                    : 'invalid weights';
+            }
+            [scoreWeightAvailability, scoreWeightBlackout].forEach(input => input.addEventListener('input', updateWeightShare));
+            [scoreMaxSlope, scoreWeightAvailability, scoreWeightBlackout].forEach(input => input.addEventListener('change', () => {
                 if (!scorePanel.classList.contains('hidden')) openScorePanel();
             }));
 
