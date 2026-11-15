@@ -424,9 +424,10 @@ def api_punteggi():
         longest_visible=np.zeros(validi.shape, dtype=np.float64),
     )
 
-    for index, riga in enumerate(times):
+    for index, _ in enumerate(times):
         maschere = {}
         for item in serie:
+            riga = item["tabella"][index]
             valori = item["fotogramma"](*riga[1:])
             soglia = 1e-3 if item["kind"] in ("sun", "earth") else 0.5
             maschere[item["kind"]] = (valori > soglia) & validi
