@@ -4,6 +4,8 @@ Moon View is an interactive site for exploring the Moon and comparing possible l
 
 The site also includes a **demo gamification concept**: landing-site scores and a leaderboard make it fun to compare locations and observation windows. These features are for exploration and illustration, not validated mission rankings or proof that a location is safe to land on.
 
+![Moon View interface showing the 3D Moon and site controls](Screen.png)
+
 **NOTE:** every script was made at least in part with the help of SI
 
 ## What you can do
